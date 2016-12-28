@@ -2,7 +2,7 @@
  *(c) Zachary Job
  *12/27/16
  *
- *defs.h
+ *defs_debug.h
  *
  *Debugging and logging interfaces and objects
  *
@@ -21,10 +21,13 @@
 
 #include <iostream>
 #include <fstream>
-#include <chrono>
-#include <ctime>
 #include <cstring>
 #include <cassert>
+
+#include "defs_file.h"
+#include "defs_time.h"
+
+#define DEBUG_LOG_HEADER "\nSTART LOGGER::"
 
 using namespace std;
 
@@ -88,45 +91,31 @@ const int debug_status::debug_class_min_error_init = 2500;
  *
  *Not designed for being a parent
  *
- 
- N O T E: MUST MIGRATE FILE OPERATIONS TO FILE DEFS
- 
- 
  */
 class debug_logger
 {
-	public:
-
-		enum class debug_file_mode_e
-		{
-			append,
-			truncate
-		};
 
 	private:
 
 		const string debug_default_log_file = "__logfile";
 
-		mutable ofstream debug_output_file;
-		mutable string debug_file_name;
-		mutable debug_file_mode_e debug_file_mode;
-
 		string debug_last_time_stamp;
 
+		file_descriptor output_file;
+		time_setter_getter time_output_file;
+
 		inline void getTimeStamp();
-		inline void getFileDescriptor();
 		inline void prependTime(bool isStart);
 
 	public:	
 
 		//gratuitous overrides, remove in post
-		debug_logger(const string file_name, const debug_file_mode_e file_mode);
-		~debug_logger(); //no virtual, avoid vtable stress... however this may be exapnded on
-		void insert_custom(const string custom_string);
+		debug_logger(const string file_name, const file_descriptor::file_mode_e file_mode);
+		void log(const string custom_string);
 		virtual istream &operator>>(istream &input);
-		void modifyMode(const debug_file_mode_e file_mode);
-		void repurpose(const string file_name);	
-		void repurpose(const string file_name, const debug_file_mode_e file_mode);
+		void setName(const string name);
+		void setTruncate(const string name = "");
+		void setAppend(const string name = "");	
 		string getLastLog();
 };
 
@@ -152,8 +141,7 @@ debug_status::debug_status(const string in[], int max_error) :
  *Enables objects to output their status easily and uniformily.
  *It may seem restrictive, but I see it as great for quick debugging.
  *
- *@PARAM: Stream to output to
- *@PARAM: Format
+ *@PARAM: Stream to output
  *@RETURN: Default
  */
 ostream &debug_status::operator<<(ostream &output)
@@ -237,25 +225,10 @@ int debug_status::getMinClassError()
  *@PARAM: The file name
  *@PARAM: The file mode
  */
-debug_logger::debug_logger(string file_name, debug_file_mode_e file_mode):
-	debug_file_name(file_name),
-	debug_file_mode(file_mode)
+debug_logger::debug_logger(string name, file_descriptor::file_mode_e mode):
+	output_file(((name == "")?debug_default_log_file:name), mode)	
 {
-	if(debug_file_name == "")
-		debug_file_name.assign(debug_default_log_file);
-
-	getFileDescriptor();
-	getTimeStamp();
-
 	prependTime(true);
-}
-
-/*
- *Destructor, ensure the descriptor is closed
- */
-debug_logger::~debug_logger()
-{
-	debug_output_file.close();
 }
 
 /*
@@ -263,18 +236,17 @@ debug_logger::~debug_logger()
  *
  *@PARAM: The custom string to insert
  */
-void debug_logger::insert_custom(const string custom_string)
+void debug_logger::log(const string custom_string)
 {
 	prependTime(false);
-	debug_output_file.write(custom_string.c_str(), custom_string.size());
-	debug_output_file.write("\n", 1);
+	output_file.write_file(custom_string.c_str(), custom_string.size());
+	output_file.write_newline();
 }
 
 /*
  *Overload for input, allow data streams to insert into the output file
  *
  *@PARAM: The input string
- *@PARAM: Format
  *@RETURN: Default
  */
 istream &debug_logger::operator>>(istream &input)
@@ -283,55 +255,48 @@ istream &debug_logger::operator>>(istream &input)
 	input >> char_arr_in;
 
 	prependTime(false);
-	debug_output_file.write(char_arr_in, strlen(char_arr_in));
-	debug_output_file.write("\n", 1);
+	output_file.write_file(char_arr_in, strlen(char_arr_in));
+	output_file.write_newline();
 
 	return input;
 }
 
 /*
- *Change the file output mode and reopen the destructor
+ *Repurpose the object
  *
- *@PARAM: The mode for file output
+ *@PARAM: The name of the output file, or empty for the same
  */
-void debug_logger::modifyMode(const debug_file_mode_e file_mode)
+void debug_logger::setName(const string name)
 {
-	debug_file_mode = file_mode;
-
-	getFileDescriptor();
+	assert(name != "");
+	
+	output_file.repurpose(name);
 }
 
 /*
- *Change the file and maintain the output mode
+ *Repurpose the object
  *
- *@PARAM: The new file name
+ *@PARAM: The name of the output file, or empty for the same
  */
-void debug_logger::repurpose(const string file_name)
+void debug_logger::setTruncate(const string name)
 {
-	if(file_name == "")
-		debug_file_name.assign(debug_default_log_file);
+	if(name == "")
+		output_file.modifyMode(file_descriptor::file_mode_e::truncate);
 	else
-		debug_file_name.assign(file_name);
-
-	getFileDescriptor();
+		output_file.repurpose(name, file_descriptor::file_mode_e::truncate);
 }
 
 /*
- *Repurpose the object to a wholly differing output file
+ *Repurpose the object
  *
- *@PARAM: The name of the output file
- *@PARAM: The mode of the output file
+ *@PARAM: The name of the output file, or empty for the same
  */
-void debug_logger::repurpose(const string file_name, debug_file_mode_e file_mode)
+void debug_logger::setAppend(const string name)
 {
-	if(file_name == "")
-		debug_file_name.assign(debug_default_log_file);
+	if(name == "")
+		output_file.modifyMode(file_descriptor::file_mode_e::append);
 	else
-		debug_file_name.assign(file_name);
-
-	debug_file_mode = file_mode;
-
-	getFileDescriptor();
+		output_file.repurpose(name, file_descriptor::file_mode_e::append);
 }
 
 /*
@@ -341,48 +306,27 @@ void debug_logger::repurpose(const string file_name, debug_file_mode_e file_mode
  */
 string debug_logger::getLastLog()
 {
-	return debug_last_time_stamp;
+	return time_output_file.getTime();
 }
 
 /*
- *Get the system time and date at time of log
+ *Add a timestamp to the log with the option
+ *of inserting a timestamp header
+ *
+ *@PARAM: If it is a header
  */
-inline void debug_logger::getTimeStamp()
-{
-	time_t time;
-	time = chrono::system_clock::to_time_t(chrono::system_clock::now());
-
-	debug_last_time_stamp = string(ctime(&time));
-}
-
-/*
- *Open a file descriptor according to internal parameters
- */
-inline void debug_logger::getFileDescriptor()
-{
-	switch(debug_file_mode)
-	{
-		case debug_file_mode_e::append:
-			debug_output_file.open(debug_file_name, ios::app);
-			break;
-		case debug_file_mode_e::truncate:
-			debug_output_file.open(debug_file_name, ios::trunc);
-			break;
-		default:
-			debug_output_file.open(debug_file_name, ios::app);
-			break;
-	}
-}
-
 inline void debug_logger::prependTime(bool isStart)
 {
+	time_output_file.setTime();
+	string curr_time = time_output_file.getTime();
+
 	if(isStart)
-		debug_output_file.write("\nSTART LOGGER::", 1);
-	debug_output_file.write(debug_last_time_stamp.c_str(), debug_last_time_stamp.size());
+		output_file.write_file(DEBUG_LOG_HEADER, strlen(DEBUG_LOG_HEADER)); //add to defines
+	output_file.write_file(curr_time.c_str(), curr_time.size());
 	if(isStart)
-		debug_output_file.write("\n\n", 2);
-	else	
-		debug_output_file.write("::", 2);
+		output_file.write_file("\n\n", 2);
+	else
+		output_file.write_file("::", 2);
 }
 
 //QA/////////////////////////////////////////
