@@ -29,7 +29,8 @@ class time_setter_getter
 {
 	private:
 
-		string time_last_recorded;
+		string
+			time_last_recorded;
 
 	public:
 
@@ -62,8 +63,8 @@ time_setter_getter::time_setter_getter()
 
 void time_setter_getter::setTime()
 {
-	time_t time;
-	time = chrono::system_clock::to_time_t(chrono::system_clock::now());
+	time_t
+		time = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 	time_last_recorded = string(ctime(&time));
 }
@@ -78,8 +79,8 @@ string time_setter_getter::getTime()
 
 string time_now::getTime()
 {
-	time_t time;
-	time = chrono::system_clock::to_time_t(chrono::system_clock::now());
+	time_t
+		time = chrono::system_clock::to_time_t(chrono::system_clock::now());
 
 	return string(ctime(&time));
 }

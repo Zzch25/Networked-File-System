@@ -21,14 +21,15 @@ HANDLER
 
 INTERNAL													
 
-NETWORK				X										
+NETWORK				X					X						
 
 REVISIONING												
 
 SCHEDULER
 
-FILE							X				X
+FILE							X					X
 
 CONNECTION						
 
-TIME							X				X
+TIME							X					X
+	

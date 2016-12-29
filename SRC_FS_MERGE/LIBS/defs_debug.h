@@ -50,19 +50,26 @@ class debug_status
 			"Allocation failed"
 		};
 
-		static const int debug_class_min_error_init;
+		static const int
+			debug_class_min_error_init;
 
-		const int debug_standard_min_error = 0;
-		const int debug_standard_max_error = 1;
-		const int debug_class_min_error = 2500;
-		const int debug_class_max_error = -1;
-		const string debug_class_identifier;
-		const string *debug_class_code_to_status;
-		const string debug_class_custom_message_ignore;	
+		const int
+			debug_standard_min_error = 0,
+			debug_standard_max_error = 1,
+			debug_class_min_error = 2500,
+			debug_class_max_error = -1;
+		
+		const string
+			debug_class_identifier,
+			debug_class_custom_message_ignore,	
+			*debug_class_code_to_status;
 
-		mutable int debug_class_return_code;
-		mutable string debug_class_status;
-		mutable string debug_class_custom_message;
+		mutable int
+			debug_class_return_code;
+
+		mutable string
+			debug_class_status,
+			debug_class_custom_message;
 
 	protected:
 		
@@ -75,7 +82,7 @@ class debug_status
 	public:
 		
 		debug_status(const string in[], int max_error); 
-		virtual ~debug_status() = 0; //So that base pointer deletions reach the child
+		virtual ~debug_status(); //So that base pointer deletions reach the child
 		virtual ostream &operator<<(ostream &output) final;
 		virtual int getReturnCode() const final;
 		virtual string getReturnStatus() const final;
@@ -97,12 +104,17 @@ class debug_logger
 
 	private:
 
-		const string debug_default_log_file = "__logfile";
+		const string
+			debug_default_log_file = "__logfile";
 
-		string debug_last_time_stamp;
+		string
+			debug_last_time_stamp;
 
-		file_descriptor output_file;
-		time_setter_getter time_output_file;
+		file_descriptor
+			output_file;
+		
+		time_setter_getter
+			time_output_file;
 
 		inline void getTimeStamp();
 		inline void prependTime(bool isStart);
@@ -132,6 +144,13 @@ class debug_logger
 debug_status::debug_status(const string in[], int max_error) : 
 	debug_class_code_to_status(in),
 	debug_class_max_error(max_error)
+{
+}
+
+/*
+ *Optional deinit
+ */
+debug_status::~debug_status()
 {
 }
 
@@ -251,7 +270,9 @@ void debug_logger::log(const string custom_string)
  */
 istream &debug_logger::operator>>(istream &input)
 {
-	char *char_arr_in;
+	char
+		*char_arr_in;
+	
 	input >> char_arr_in;
 
 	prependTime(false);
@@ -318,7 +339,9 @@ string debug_logger::getLastLog()
 inline void debug_logger::prependTime(bool isStart)
 {
 	time_output_file.setTime();
-	string curr_time = time_output_file.getTime();
+	
+	string
+		curr_time = time_output_file.getTime();
 
 	if(isStart)
 		output_file.write_file(DEBUG_LOG_HEADER, strlen(DEBUG_LOG_HEADER)); //add to defines
