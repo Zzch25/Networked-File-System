@@ -27,7 +27,7 @@
 #include "defs_file.h"
 #include "defs_time.h"
 
-#define DEBUG_LOG_HEADER "\nSTART LOGGER::"
+#define DEBUG_STATUS_LOG_HEADERp "\nSTART LOGGER::"
 
 using namespace std;
 
@@ -344,7 +344,7 @@ inline void debug_logger::prependTime(bool isStart)
 		curr_time = time_output_file.getTime();
 
 	if(isStart)
-		output_file.write_file(DEBUG_LOG_HEADER, strlen(DEBUG_LOG_HEADER)); //add to defines
+		output_file.write_file(DEBUG_STATUS_LOG_HEADERp, strlen(DEBUG_STATUS_LOG_HEADERp)); //add to defines
 	output_file.write_file(curr_time.c_str(), curr_time.size());
 	if(isStart)
 		output_file.write_file("\n\n", 2);

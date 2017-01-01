@@ -20,9 +20,9 @@
 
 #include "./defs_debug.h"
 
-#define NETWORK_SIZE_BUFFERp 256
-#define NETWORK_LOCAL_ERROR_COUNTp 6
-#define NETWORK_CONNECTION_BACKLOGp 5
+#define NETWORK_INSTANCE_SIZE_BUFFERp 256
+#define NETWORK_INSTANCE_LOCAL_ERROR_COUNTp 6
+#define NETWORK_INSTANCE_CONNECTION_BACKLOGp 5
 
 using namespace std;
 
@@ -31,7 +31,7 @@ using namespace std;
  *
  *A instance for communicating to a remote device
  */
-class network_instance : debug_status
+class network_instance : public debug_status
 {
 	private:
 
@@ -46,7 +46,15 @@ class network_instance : debug_status
 		};
 
 		const string
-			network_local_errors[6] = {"Cannot obtain server address information", "Cannot obtain client address", "Cannot open socket", "Cannot bind", "Cannot accept connection", "Cannot connect"};
+			network_local_errors[NETWORK_INSTANCE_LOCAL_ERROR_COUNTp] =
+			{
+				"Cannot obtain server address information",
+				"Cannot obtain client address",
+				"Cannot open socket",
+				"Cannot bind",
+				"Cannot accept connection",
+				"Cannot connect"
+			};
 		
 		bool
 			network_connection_ready,
@@ -54,7 +62,7 @@ class network_instance : debug_status
 			network_connection_established;
 
 		char
-			network_size_buffer[NETWORK_LOCAL_ERROR_COUNTp];
+			network_size_buffer[NETWORK_INSTANCE_LOCAL_ERROR_COUNTp];
 
 		int
 			network_socket_descriptor,
@@ -95,7 +103,7 @@ class network_instance : debug_status
  *Initializer, do not allow init of connection yet just because!
  */
 network_instance::network_instance():
-	debug_status(network_local_errors, debug_status::getMinClassError() + NETWORK_LOCAL_ERROR_COUNTp - 1),
+	debug_status(network_local_errors, debug_status::getMinClassError() + NETWORK_INSTANCE_LOCAL_ERROR_COUNTp - 1),
 	network_connection_ready(false),	
 	network_connection_is_client(false),	
 	network_connection_established(false)
@@ -166,7 +174,7 @@ void network_instance::acceptConnection()
 
 	if(bind(network_socket_descriptor, (struct sockaddr *)&network_server_address, sizeof(network_server_address)) >= 0)
 	{
-		listen(network_socket_descriptor, NETWORK_CONNECTION_BACKLOGp);
+		listen(network_socket_descriptor, NETWORK_INSTANCE_CONNECTION_BACKLOGp);
 		
 		if((network_established_socket_descriptor = accept(network_socket_descriptor, (struct sockaddr *)&network_client_address, &size)) >= 0)
 			network_connection_established = true;
@@ -229,7 +237,7 @@ void network_instance::sendToConnection(char *in, int size)
 		network_descriptor = network_established_socket_descriptor;
 
 	sprintf(network_size_buffer, "%d", size);
-	write(network_descriptor, network_size_buffer, NETWORK_SIZE_BUFFERp);
+	write(network_descriptor, network_size_buffer, NETWORK_INSTANCE_SIZE_BUFFERp);
 	write(network_descriptor, in, size);
 }
 
@@ -253,7 +261,7 @@ shared_ptr<char> network_instance::receiveFromConnection(int *size)
 	else
 		network_descriptor = network_established_socket_descriptor;
 
-	read(network_descriptor, network_size_buffer, NETWORK_SIZE_BUFFERp);
+	read(network_descriptor, network_size_buffer, NETWORK_INSTANCE_SIZE_BUFFERp);
 	*size = atoi(network_size_buffer);
 	in = new char[*size];
 	read(network_descriptor, in, *size);

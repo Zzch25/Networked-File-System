@@ -1,5 +1,1 @@
-Libssh2 has been selected for many reasons being portability and transparency. Also for being a disruptive competitor to a now more shadowy libssl. I did enjoy the little flame war Daniel sparked.
-
-Daniel is my hero!
-
-cURL and other pieces of source I've used are fine contributions.
+I am not the owner or developer of either freewares. They are the property of their respective owners. If I have somehow violated any terms of the license feel free to contact me and I will willingly rectify the situation. See my LinkedIn on my profile page.
