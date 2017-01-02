@@ -1,0 +1,1 @@
+/usr/bin/cc      CMakeFiles/test_performance.dir/test/test_performance.c.o  -o test_performance -rdynamic liboaes_lib.a 

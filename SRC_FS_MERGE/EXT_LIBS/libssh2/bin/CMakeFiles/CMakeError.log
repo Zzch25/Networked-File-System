@@ -1,0 +1,144 @@
+Determining if files windows.h exist failed with the following output:
+Change Dir: /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec3585175973/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec3585175973.dir/build.make CMakeFiles/cmTryCompileExec3585175973.dir/build
+make[1]: Entering directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec3585175973.dir/CheckIncludeFiles.c.o
+/usr/bin/cc   --std=gnu90  -Wall    -o CMakeFiles/cmTryCompileExec3585175973.dir/CheckIncludeFiles.c.o   -c /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckIncludeFiles.c
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckIncludeFiles.c:2:21: fatal error: windows.h: No such file or directory
+ #include <windows.h>
+                     ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTryCompileExec3585175973.dir/CheckIncludeFiles.c.o] Error 1
+make[1]: Leaving directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+make: *** [cmTryCompileExec3585175973/fast] Error 2
+
+Source:
+/* */
+#include <windows.h>
+
+
+int main(){return 0;}
+
+Determining if files ws2tcpip.h exist failed with the following output:
+Change Dir: /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec3589413992/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec3589413992.dir/build.make CMakeFiles/cmTryCompileExec3589413992.dir/build
+make[1]: Entering directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec3589413992.dir/CheckIncludeFiles.c.o
+/usr/bin/cc   --std=gnu90  -Wall    -o CMakeFiles/cmTryCompileExec3589413992.dir/CheckIncludeFiles.c.o   -c /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckIncludeFiles.c
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckIncludeFiles.c:2:22: fatal error: ws2tcpip.h: No such file or directory
+ #include <ws2tcpip.h>
+                      ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTryCompileExec3589413992.dir/CheckIncludeFiles.c.o] Error 1
+make[1]: Leaving directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+make: *** [cmTryCompileExec3589413992/fast] Error 2
+
+Source:
+/* */
+#include <ws2tcpip.h>
+
+
+int main(){return 0;}
+
+Determining if files winsock2.h exist failed with the following output:
+Change Dir: /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec2965242624/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec2965242624.dir/build.make CMakeFiles/cmTryCompileExec2965242624.dir/build
+make[1]: Entering directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec2965242624.dir/CheckIncludeFiles.c.o
+/usr/bin/cc   --std=gnu90  -Wall    -o CMakeFiles/cmTryCompileExec2965242624.dir/CheckIncludeFiles.c.o   -c /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckIncludeFiles.c
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckIncludeFiles.c:2:22: fatal error: winsock2.h: No such file or directory
+ #include <winsock2.h>
+                      ^
+compilation terminated.
+make[1]: *** [CMakeFiles/cmTryCompileExec2965242624.dir/CheckIncludeFiles.c.o] Error 1
+make[1]: Leaving directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+make: *** [cmTryCompileExec2965242624/fast] Error 2
+
+Source:
+/* */
+#include <winsock2.h>
+
+
+int main(){return 0;}
+
+Determining if the _stricmp exist failed with the following output:
+Change Dir: /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec2462257033/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec2462257033.dir/build.make CMakeFiles/cmTryCompileExec2462257033.dir/build
+make[1]: Entering directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec2462257033.dir/CheckSymbolExists.c.o
+/usr/bin/cc   --std=gnu90  -Wall    -o CMakeFiles/cmTryCompileExec2462257033.dir/CheckSymbolExists.c.o   -c /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: ‘_stricmp’ undeclared (first use in this function)
+   return ((int*)(&_stricmp))[argc];
+                   ^
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:13:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+make[1]: *** [CMakeFiles/cmTryCompileExec2462257033.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+make: *** [cmTryCompileExec2462257033/fast] Error 2
+
+File /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <string.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef _stricmp
+  return ((int*)(&_stricmp))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+
+Determining if the _snprintf exist failed with the following output:
+Change Dir: /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp
+
+Run Build Command:/usr/bin/make "cmTryCompileExec4186757616/fast"
+/usr/bin/make -f CMakeFiles/cmTryCompileExec4186757616.dir/build.make CMakeFiles/cmTryCompileExec4186757616.dir/build
+make[1]: Entering directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+/usr/bin/cmake -E cmake_progress_report /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CMakeFiles 1
+Building C object CMakeFiles/cmTryCompileExec4186757616.dir/CheckSymbolExists.c.o
+/usr/bin/cc   --std=gnu90  -Wall    -o CMakeFiles/cmTryCompileExec4186757616.dir/CheckSymbolExists.c.o   -c /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c: In function ‘main’:
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: error: ‘_snprintf’ undeclared (first use in this function)
+   return ((int*)(&_snprintf))[argc];
+                   ^
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:8:19: note: each undeclared identifier is reported only once for each function it appears in
+/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:13:1: warning: control reaches end of non-void function [-Wreturn-type]
+ }
+ ^
+make[1]: *** [CMakeFiles/cmTryCompileExec4186757616.dir/CheckSymbolExists.c.o] Error 1
+make[1]: Leaving directory `/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp'
+make: *** [cmTryCompileExec4186757616/fast] Error 2
+
+File /mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/CMakeFiles/CMakeTmp/CheckSymbolExists.c:
+/* */
+#include <stdio.h>
+
+int main(int argc, char** argv)
+{
+  (void)argv;
+#ifndef _snprintf
+  return ((int*)(&_snprintf))[argc];
+#else
+  (void)argc;
+  return 0;
+#endif
+}
+

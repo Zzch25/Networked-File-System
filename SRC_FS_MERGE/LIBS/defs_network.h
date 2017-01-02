@@ -163,7 +163,7 @@ void network_instance::setParameters(string client_address, int client_port, str
  */
 void network_instance::acceptConnection()
 {
-	int
+	unsigned int
 		size;
 
 	assert(network_connection_ready);
