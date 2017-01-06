@@ -1,33 +1,40 @@
 #!/bin/bash
 
-#libssh2
-cd ./libssh2
-mkdir bin
-cd bin
-cmake -DBUILD_SHARED_LIBS=ON -DDCRYPTO_BACKEND=OpenSSL -DENABLE_ZLIB_COMPRESSION=ON ..
-cmake --build .
-cp ./src/libssh2.so ../../BUILT_LIBS/libssh2_s.so
-cd ../..
+LIB_LOC="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && pwd )"
 
-#libz
-cd ./zlib
-mkdir bin
-cd bin
-cmake ..
-cmake --build .
-cp ./libz.so ../../BUILT_LIBS/libz_s.so
-cd ../..
+if [ ! -e $LIB_LOC/BUILT_LIBS/libz_s.so ]; then
+	echo "libz not found"
+	
+	#libz
+	cd zlib
+	mkdir bin
+	cd bin
+	cmake clean
+	cmake ..
+	cmake --build .
+	#make
+	#TEMPORARY UNTIL HEADER WRITTEN
+	#make install
+	cp ./libz.so ../../BUILT_LIBS/libz_s.so
+	cmake clean
+	cd ..
+	rm -r bin
+	cd ..
+fi
 
-#openssl
-cd ./openssl
-./config
-make
-cp ./libcrypto.a ../BUILT_LIBS/libcrypto_s.a
-cd ..
-
-#openaes
-cd ./openaes
-cmake .
-cmake --build .
-cp ./liboaes_lib.a ../BUILT_LIBS/liboaes_s.a
-cd ..
+if [ ! -e $LIB_LOC/BUILT_LIBS/libssl_s.so ] || [ ! -e $LIB_LOC/BUILT_LIBS/libcrypto_s.so  ]; then
+	echo "libssl not found"
+	
+	#openssl
+	cd openssl
+	make clean
+	mkdir _post
+	./config --prefix=$LIB_LOC/openssl/openssl_build --openssldir=$LIB_LOC/openssl/openssl_build/_post
+	make
+	#TEMPORARY UNTIL HEADER WRITTEN
+	#make install
+	cp ./libcrypto.so ../BUILT_LIBS/libcrypto_s.so
+	cp ./libssl.so ../BUILT_LIBS/libssl_s.so
+	make clean
+	cd ..
+fi

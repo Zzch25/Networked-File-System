@@ -1,1 +1,0 @@
-/usr/bin/cc      CMakeFiles/example.dir/test/example.o  -o example -rdynamic libz.so.1.2.9 -Wl,-rpath,/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/zlib/bin 

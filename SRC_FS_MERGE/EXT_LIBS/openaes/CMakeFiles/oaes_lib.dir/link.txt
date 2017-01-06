@@ -1,2 +1,0 @@
-/usr/bin/ar cr liboaes_lib.a  CMakeFiles/oaes_lib.dir/src/oaes_base64.c.o CMakeFiles/oaes_lib.dir/src/oaes_lib.c.o CMakeFiles/oaes_lib.dir/src/isaac/rand.c.o
-/usr/bin/ranlib liboaes_lib.a

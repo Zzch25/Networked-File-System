@@ -1,1 +1,0 @@
-/usr/bin/cc  --std=gnu90  -Wall    CMakeFiles/example-tcpip-forward.dir/tcpip-forward.c.o  -o example-tcpip-forward -rdynamic ../src/libssh2.so.1.0.1 -Wl,-rpath,/mnt/c/Users/JOBZ/Desktop/Work/GAPrac/EXER/CPP_PRAC/MICRO_PROJECTS/NETWORKING_SERIES/SRC_FS_MERGE/EXT_LIBS/libssh2/bin/src 

@@ -1,1 +1,0 @@
-/usr/bin/cc      CMakeFiles/test_keys.dir/test/test_keys.c.o  -o test_keys -rdynamic liboaes_lib.a 
