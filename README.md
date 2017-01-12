@@ -18,7 +18,7 @@ _DEBUG					X					X
 
 CONCURRENCY												
 
-ENCRYPTION				X										
+ENCRYPTION				X				<!> Some type and syntax issues must be corrected <!>						
 
 FILESYSTEM												
 
