@@ -767,7 +767,6 @@ string encryption_offline::base64Encode(char *in, int *length)
 {
 	string
 		result;
-
 	char
 		*c_string;
 

@@ -10,15 +10,18 @@ A synchronous networked filesystem which slowly moves all changes to the connect
 
 Revisioning will be the primary aim, secondary which also will be the first draft of the code will simply allow for selective syncronization.
 
-Work
+NOTE: Return types need to be set to auto in the future. C++14 must be setup for my other enviornment, GCC won't compile due to a dependency error. Types must be cleaned, prefer
+string
+
+Work: Types must be unified to string
 
 __								IN_PROG		DRAFT		BETA		FINAL
 
 _DEBUG					X					X						
 
-CONCURRENCY												
+CONCURRENCY			X									
 
-ENCRYPTION				X				<!> Some type and syntax issues must be corrected <!>						
+ENCRYPTION				X				X					
 
 FILESYSTEM												
 

@@ -51,7 +51,7 @@ class concurrency_manager : public debug_status
 };
 
 concurrency_manager::concurrency_manager():
-	debug_status(concurrency_local_errors, debug_status::getMinClassError() + CONCURRENCY_MANAGER_LOCAL_ERROR_COUNTp - 1)
+	debug_status(concurrency_local_errors, debug_status::getMinClassError() + CONCURRECNY_MANAGER_LOCAL_ERROR_COUNTp - 1)
 {
 
 }
