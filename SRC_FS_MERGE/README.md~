@@ -13,7 +13,7 @@ Revisioning will be the primary aim, secondary which also will be the first draf
 NOTE: Return types need to be set to auto in the future. C++14 must be setup for my other enviornment, GCC won't compile due to a dependency error. Types must be cleaned, prefer
 string
 
-Work: Types must be unified to string, and error checking must be introduced by beta stage
+Work: Types must be unified to string
 
 __								IN_PROG		DRAFT		BETA		FINAL
 
