@@ -21,7 +21,8 @@
 #include <thread>
 #include <string>
 #include <atomic>
-#include <queue>
+#include <list>
+#include <vector>
 #include <unordered_map>
 
 #include "defs_debug.h"
@@ -42,6 +43,9 @@ class concurrency_manager : public debug_status
 
 		static atomic<short> 
 			concurrency_scheduled_thread_count;
+
+		bool
+			concurrency_primary_launch_ran;
 
 		short
 			concurrency_permanent_thread_count;
@@ -84,6 +88,9 @@ class concurrency_manager : public debug_status
 			}
 		};
 
+		list<struct concurrency_thread_task>
+			task_queue;
+
 		enum class concurrency_local_errors_lookup
 		{
 			some_generic_placeholder = 0
@@ -106,9 +113,10 @@ class concurrency_manager : public debug_status
 		bool enlistCommonVariable(void *reference, string lookup);
 		bool removeCommonVariable(string lookup);
 		short enqueueTask(bool set_join, bool set_permanent, bool set_reoccuring, auto &function, string parameters...);
-		short runTask();
+		bool runTask();
 		short forwardTasks(short task_ids...);
-		short endTasks(short task_ids);
+		void forceTasks(short task_ids...);
+		void endTasks(short task_ids);
 		void startPrimaryTasks();
 		void endPrimaryTasks();
 };
@@ -122,7 +130,8 @@ atomic<short> concurrency_manager::concurrency_scheduled_thread_count(CONCURRENC
  *Standard initilizer with debugging information setup
  */
 concurrency_manager::concurrency_manager():
-	debug_status(concurrency_local_errors, debug_status::getMinClassError() + CONCURRENCY_MANAGER_LOCAL_ERROR_COUNTp - 1)
+	debug_status(concurrency_local_errors, debug_status::getMinClassError() + CONCURRENCY_MANAGER_LOCAL_ERROR_COUNTp - 1),
+	concurrency_primary_launch_ran(false)
 {
 	setResources();
 }
@@ -132,6 +141,137 @@ concurrency_manager::concurrency_manager():
  */
 concurrency_manager::~concurrency_manager()
 {
+
+}
+
+/*
+ *enlist common variable by lookup via reference
+ *
+ *@PARAM: The data pointer
+ *@PARAM: The lookup key for insertion
+ *@RETURN: If the lookup was able to insert
+ */
+bool concurrency_manager::enlistCommonVariable(void *reference, string lookup)
+{
+	bool
+		result;
+
+	result = false;
+
+	return result;
+}
+
+/*
+ *remove common variable by lookup if not in use
+ *
+ *@PARAM: The element to remove
+ *@RETURN: If the remove found and eliminated the element
+ */
+bool concurrency_manager::removeCommonVariable(string lookup)
+{
+	bool
+		result;
+
+	result = false;
+
+	return result;
+}
+
+/*
+ *enqueue task with list of common variables
+ *
+ *@PARAM: If the task should be joined with the primary thread 
+ *@PARAM: If the task ought to be run as a primary task
+ *@PARAM: If the task should enqueue again upon finishing
+ *@PARAM: The callback function
+ *@PARAM: The variadic string list for assinging the parameters to the function call
+ *@RETURN: The total enqueued given possible disruption
+ */
+short concurrency_manager::enqueueTask(bool set_join, bool set_permanent, bool set_reoccuring, auto &function, string parameters...)
+{
+	short
+		result;
+
+	result = 0;
+
+	return result;
+}
+
+/*
+ *callback for attempt run event, intended for a scheduler
+ *
+ *@RETURN: If a task was available for execution
+ */
+bool concurrency_manager::runTask()
+{
+	bool
+		result;
+
+	assert(concurrency_primary_launch_ran);
+
+	result = false;
+
+	return result;
+}
+
+/*
+ *callback for running specified scheduled tasks IF permanent(s) is running
+ *
+ *@PARAM: The id's to forward from their location in the queue to running status
+ *@RETURN: How many of the requested were able to run
+ */
+short concurrency_manager::forwardTasks(short task_ids...)
+{
+	short
+		result;
+
+	assert(concurrency_primary_launch_ran);
+	
+	result = 0;
+
+	return result;
+}
+
+/*
+ *callback for running specified scheduled tasks IF permanent(s) is running
+ *
+ *@PARAM: The id's to forward from their location in the queue to running status
+ */
+void concurrency_manager::forceTasks(short task_ids...)
+{
+	assert(concurrency_primary_launch_ran);
+
+}
+
+/*
+ *callback for ending specified scheduled tasks IF permanent(s) is running
+ *NOTE: This is non blocking, this only sets flags
+ *
+ *@PARAM: The id's of the desired threads to end
+ */
+void concurrency_manager::endTasks(short task_ids)
+{
+
+	assert(concurrency_primary_launch_ran);
+
+}
+
+/*
+ *start primary tasks
+ */
+void concurrency_manager::startPrimaryTasks()
+{
+
+	concurrency_primary_launch_ran = true;
+}
+
+/*
+ *end primary tasks and all scheduled tasks
+ */
+void concurrency_manager::endPrimaryTasks()
+{
+
+	assert(concurrency_primary_launch_ran);
 
 }
 
@@ -168,100 +308,6 @@ bool concurrency_manager::requestOccupancy()
 	tester = concurrency_cpu_count;
 
 	return !concurrency_scheduled_thread_count.compare_exchange_strong(tester, tester);
-}
-
-/*
- *enlist common variable by lookup via reference
- *
- *@PARAM:
- *@RETURN
- */
-bool concurrency_manager::enlistCommonVariable(void *reference, string lookup)
-{
-
-	return 0;
-}
-
-/*
- *remove common variable by lookup if not in use
- *
- *@PARAM:
- *@RETURN
- */
-bool concurrency_manager::removeCommonVariable(string lookup)
-{
-
-	return 0;
-}
-
-/*
- *enqueue task with list of common variables
- *
- *@PARAM:
- *@RETURN
- */
-short concurrency_manager::enqueueTask(bool set_join, bool set_permanent, bool set_reoccuring, auto &function, string parameters...)
-{
-
-	return 0;
-}
-
-/*
- *callback for attempt run event
- *
- *@PARAM:
- *@RETURN
- */
-short concurrency_manager::runTask()
-{
-
-	return 0;
-}
-
-/*
- *callback for running specified scheduled tasks IF permanent(s) is running
- *
- *@PARAM:
- *@RETURN
- */
-short concurrency_manager::forwardTasks(short task_ids...)
-{
-
-	return 0;
-}
-
-/*
- *callback for ending specified scheduled tasks IF permanent(s) is running
- *
- *@PARAM:
- *@RETURN
- */
-short concurrency_manager::endTasks(short task_ids)
-{
-
-	return 0;
-}
-
-/*
- *start permanent tasks
- *
- *@PARAM:
- *@RETURN
- */
-void concurrency_manager::startPrimaryTasks()
-{
-
-}
-
-/*
- *end permanent tasks
- *
- *@PARAM:
- *@RETURN
- */
-void concurrency_manager::endPrimaryTasks()
-{
-
 }
 
 //QA/////////////////////////////////////////
