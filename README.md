@@ -19,7 +19,7 @@ __								IN_PROG		DRAFT		BETA		FINAL
 
 _DEBUG					X					X						
 
-CONCURRENCY			X									
+CONCURRENCY			X					X
 
 ENCRYPTION				X				X					
 
