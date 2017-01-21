@@ -8,19 +8,12 @@
  *to launch and control threads. This object essentially is a thread
  *manager, the intention is to prevent the need for bulky launchers.
  *
- *
- 
-	NOTE: This is still pre draft!!! Just a quick throw everything on paper
-			version
-
-
- *
- *
  *Other concurrency methods can be developed here and likely will extend
  *to atomic type operations. This would be useful towards avoiding
  *the need for locks in simple situations. The hope is to truly leverage
  *C/C++11
  */
+
 #ifndef DEFS_CONCURRENCY
 #define DEFS_CONCURRENCY
 
@@ -118,12 +111,13 @@ class concurrency_manager : public debug_status
 
 		bool enlistCommonVariable(auto *reference, string lookup, atomic_flag **get_lock = nullptr);
 		bool removeCommonVariable(string lookup);
+		atomic_flag *getCommonVariableLock(string lookup);
 		void enqueueTask(bool set_join, bool set_permanent, bool set_reoccuring, auto function, vector<string> *parameters);
 		void forwardTasks(vector<short> task_ids);
 		void forceTasks(vector<short> task_ids);
-		void startTasks();
+		void setTasks();
 		void endTasks();
-		void startAllTasks();
+		void setAllTasks();
 		void endAllTasks();
 		bool runTask(bool ignore_allocation = false);
 };
@@ -174,7 +168,10 @@ concurrency_manager::concurrency_thread_task::concurrency_thread_task(concurrenc
 	
 	master->concurrency_local_thread_count++;
 	if(id_has_death = (!master->concurrency_last_id_death.empty()))
+	{
 		top_id = master->concurrency_last_id_death.top();
+		master->concurrency_last_id_death.pop();
+	}
 	task_id = (short)(id_has_death) * top_id + (short)(!id_has_death) * master->concurrency_local_thread_count;
 
 	for(auto current_element : *parameters)
@@ -293,6 +290,25 @@ bool concurrency_manager::removeCommonVariable(string lookup)
 	return result;
 }
 
+/*
+ *Grab the lock for a common variable
+ *
+ *@PARAM: The variable lookup
+ *@RETURN: The variable lock if the lookup exists else nullptr
+ */
+atomic_flag *concurrency_manager::getCommonVariableLock(string lookup)
+{
+	atomic_flag
+		*result;
+
+	result = nullptr;
+	auto get_element = concurrency_system_parameters.find(lookup);
+
+	if(get_element != concurrency_system_parameters.end())
+		result = &get_element->second.first.second;
+
+	return result;
+}
 
 /*
  *enqueue task with list of common variables
@@ -335,13 +351,17 @@ void concurrency_manager::enqueueTask(bool set_join, bool set_permanent, bool se
 /*
  *callback for running specified scheduled tasks IF permanent(s) is running
  *
+ * SHOULD not really be used that much. Proper practices are much more
+ * desirable. Hense the current lack of optimization in choicce of
+ * data type. It's more suitable for the desired use.
+ *
  *@PARAM: The id's to forward from their location in the queue to running status
  */
 void concurrency_manager::forwardTasks(vector<short> task_ids)
 {
 	assert(concurrency_primary_launch_ran);
 
-	unordered_map<short, bool> //lazy, could use hash... should do that later
+	unordered_map<short, bool> //lazy, could use lookup alone... should do that later
 		verify_selected;
 
 	for(auto get_element : task_ids)
@@ -367,14 +387,7 @@ void concurrency_manager::forceTasks(vector<short> task_ids)
 
 	assert(concurrency_primary_launch_ran);
 
-	unordered_map<short, bool> //lazy, could use hash... should do that later
-		verify_selected;
-
-	for(auto get_element : task_ids)
-	{
-		verify_selected.emplace(get_element, true);
-		++size;
-	}
+	size = task_ids.size();
 
 	forwardTasks(task_ids);
 
@@ -386,7 +399,7 @@ void concurrency_manager::forceTasks(vector<short> task_ids)
  *callback for allowing scheduled tasks IF permanent(s) is running
  *NOTE: This is non blocking, this only sets flags
  */
-void concurrency_manager::startTasks()
+void concurrency_manager::setTasks()
 {
 	assert(concurrency_primary_launch_ran);
 
@@ -407,7 +420,7 @@ void concurrency_manager::endTasks()
 /*
  *start primary tasks
  */
-void concurrency_manager::startAllTasks()
+void concurrency_manager::setAllTasks()
 {
 	short
 		list_size;
@@ -425,7 +438,6 @@ void concurrency_manager::startAllTasks()
  */
 void concurrency_manager::endAllTasks()
 {
-
 	assert(concurrency_primary_launch_ran);
 
 	concurrency_scheduled_exit_set = true;	
@@ -438,7 +450,7 @@ void concurrency_manager::endAllTasks()
  *
  *ABSOLUTE accurracy is not needed. A thread may die
  *releasing an allocation to an otherwise full running
- *pool mid execution
+ *pool mid execution. Vise versa
  *
  *@PARAM: Ignore the recommended thread count
  *@RETURN: If a task was ready and ran
