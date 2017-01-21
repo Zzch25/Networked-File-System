@@ -112,14 +112,18 @@ class concurrency_manager : public debug_status
 		bool enlistCommonVariable(auto *reference, string lookup, atomic_flag **get_lock = nullptr);
 		bool removeCommonVariable(string lookup);
 		atomic_flag *getCommonVariableLock(string lookup);
+
 		void enqueueTask(bool set_join, bool set_permanent, bool set_reoccuring, auto function, vector<string> *parameters);
 		void forwardTasks(vector<short> task_ids);
+		
 		void forceTasks(vector<short> task_ids);
+		bool runTask(bool ignore_allocation = false);
+		
 		void setTasks();
 		void endTasks();
+
 		void setAllTasks();
 		void endAllTasks();
-		bool runTask(bool ignore_allocation = false);
 };
 
 atomic<short> concurrency_manager::concurrency_permanent_thread_count(CONCURRENCY_MANAGER_PERMANENT_THREAD_CONSUMPTIONp);
