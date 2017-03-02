@@ -5,7 +5,7 @@ SRC = \
 RM = rm -rf
 
 LIBRARY_DIRS:=-L./EXT_LIBS/BUILT_LIBS
-LIBRARIES:=-lssl -lcrypto -lz
+LIBRARIES:=-lssl -lcrypto -lz -lpthread
 
 all:
 	g++ -ggdb -std=c++14 $(LIBRARY_DIRS) $(SRC) -o $(NAME) $(LIBRARIES)

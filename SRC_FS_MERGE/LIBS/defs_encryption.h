@@ -434,7 +434,12 @@ void encryption_networked::loadPublicKeys(char *local_unencrypted_private_key, c
  */
 void encryption_networked::flushDecryptedPrivateKey()
 {
-	memcpy(encryption_local_private_key, 0, ENCRYPTION_RSA_LENGTH);
+	char
+		zero;
+
+	zero = 0;
+
+	memcpy(encryption_local_private_key, &zero, ENCRYPTION_RSA_LENGTH);
 	cleanRSA(true);
 	encryption_local_private_key_loaded = false;
 }

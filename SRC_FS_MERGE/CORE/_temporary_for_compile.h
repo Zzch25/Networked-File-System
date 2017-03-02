@@ -9,6 +9,7 @@
 #include "../LIBS/defs_internal.h"
 #include "../LIBS/defs_network.h"
 #include "../LIBS/defs_time.h"
+#include "../LIBS/defs_filesystem.h"
 
 using namespace std;
 

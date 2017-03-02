@@ -58,6 +58,7 @@ class file_descriptor
 		void write_newline();
 		istream &operator>>(istream &input);
 		ostream &operator<<(ostream &output);
+
 		void modifyMode(const file_mode_e mode);
 		void repurpose(const string name);
 		void repurpose(const string name, const file_mode_e mode);

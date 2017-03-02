@@ -23,7 +23,7 @@ CONCURRENCY			X					X
 
 ENCRYPTION				X				X					
 
-FILESYSTEM												
+FILESYSTEM				X								
 
 HANDLER													
 
