@@ -15,6 +15,10 @@ clean:
 	-find ./ -type f \( 		-iname \*.h~ 		-o			\
 	  								-iname \*.o			-o		  	\
 	  								-iname \*.o~		-o		  	\
+	  								-iname \*.swp		-o		  	\
+	  								-iname \*.swp~		-o		  	\
+	  								-iname \*.swo		-o		  	\
+	  								-iname \*.swo~		-o		  	\
 	  								-iname \*.s			-o		  	\
 	  								-iname \*.s~		-o		  	\
 	  								-iname \*.cpp~		-o		  	\
