@@ -30,7 +30,7 @@
 
 #include "defs_debug.h"
 
-#define CONCURRENCY_MANAGER_LOCAL_ERROR_COUNTp 1
+#define CONCURRENCY_MANAGER_LOCAL_ERROR_COUNTp 4
 #define CONCURRENCY_MANAGER_SCHEDULED_THREAD_CONSUMPTIONp 0
 #define CONCURRENCY_MANAGER_PERMANENT_THREAD_CONSUMPTIONp 1
 
@@ -93,13 +93,19 @@ class concurrency_manager : public debug_status
 
 		enum class concurrency_local_errors_lookup
 		{
-			some_generic_placeholder = 0
+			cannot_enlist_common_variable = 0,
+			cannot_remove_common_variable,
+			cannot_get_common_variable_lock,
+			cannot_run_task
 		};
 
 		const string
 			concurrency_local_errors[CONCURRENCY_MANAGER_LOCAL_ERROR_COUNTp] =
 			{
-				"Some generic placeholder"
+				"Cannot enlist common variable",
+				"Cannot remove common variable",
+				"Cannot get common variable lock",
+				"Cannot run task"
 			};
 
 		inline void setResources();
@@ -262,6 +268,9 @@ bool concurrency_manager::enlistCommonVariable(auto *reference, string lookup, a
 	if(result && get_lock != nullptr)
 		*get_lock = &concurrency_system_parameters.at(lookup).first.second;
 
+	if(!result)
+		setReturnCode((int)concurrency_local_errors_lookup::cannot_enlist_common_variable);
+	
 	return result;
 }
 
@@ -291,6 +300,9 @@ bool concurrency_manager::removeCommonVariable(string lookup)
 		}
 	}
 
+	if(!result)
+		setReturnCode((int)concurrency_local_errors_lookup::cannot_remove_common_variable);
+	
 	return result;
 }
 
@@ -311,6 +323,9 @@ atomic_flag *concurrency_manager::getCommonVariableLock(string lookup)
 	if(get_element != concurrency_system_parameters.end())
 		result = &get_element->second.first.second;
 
+	if(result == nullptr)
+		setReturnCode((int)concurrency_local_errors_lookup::cannot_get_common_variable_lock);
+	
 	return result;
 }
 
@@ -504,6 +519,9 @@ bool concurrency_manager::runTask(bool ignore_allocation)
 		concurrency_critical_section.clear(std::memory_order_acquire);
 	}
 
+	if(!result)
+		setReturnCode((int)concurrency_local_errors_lookup::cannot_run_task);
+	
 	return result;
 }
 
