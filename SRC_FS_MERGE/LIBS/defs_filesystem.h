@@ -295,7 +295,7 @@ bool filesystem_head::stepBackDirectory(int steps_backward = 0)
 
 	for(matched_delimeters = 0, string_index = parent_directory.size() - 1;
 				matched_delimeters < steps_backward && string_index >= 0;
-					++matched_delimeters, --string_index)
+					--string_index)
 		matched_delimeters += parent_directory[string_index] == filesystem_node_delimiter;
 
 	if(matched_delimeters == steps_backward)
