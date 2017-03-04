@@ -67,8 +67,8 @@ class internal_unbalanced_tree_filesystem
 		
 	public:
 	
-		internal_unbalanced_tree();
-		~internal_unbalanced_tree();
+		internal_unbalanced_tree_filesystem();
+		~internal_unbalanced_tree_filesystem();
 
 		/*
 			_25_..._25_..._25_			
