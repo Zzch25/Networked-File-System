@@ -23,17 +23,17 @@ CONCURRENCY			X					X
 
 ENCRYPTION				X				X					
 
-FILESYSTEM												
+FILESYSTEM				X				X				
 
-HANDLER													
+HANDLER				X									
 
-INTERNAL													
+INTERNAL				X									
 
 NETWORK				X					X						
 
-REVISIONING												
+REVISIONING			X									
 
-SCHEDULER
+SCHEDULER			X
 
 FILE							X					X
 
