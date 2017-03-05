@@ -25,7 +25,7 @@ ENCRYPTION				X				X
 
 FILESYSTEM				X					X			
 
-HANDLER				X									
+HANDLER				X					X				
 
 INTERNAL				X									
 
