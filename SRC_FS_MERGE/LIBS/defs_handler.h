@@ -40,7 +40,7 @@ class handler_callback
 			handler_formatted_function;
 
 	public:
-		
+			
 		handler_callback(auto bound_or_free_function = nullptr);
 		~handler_callback();
 

@@ -10,8 +10,12 @@
  *
  *Other concurrency methods can be developed here and likely will extend
  *to atomic type operations. This would be useful towards avoiding
- *the need for locks in simple situations. The hope is to truly leverage
- *C/C++11
+ *the need for locks in simple situations.
+ *
+ *The rationale for atomics over conditions/mutexes is justified. The host thread
+ *will launch the managers. Schedulers however will be employed by children.
+ *Instead of waiting, MOVE ON. However, thread safety just in case. This
+ *can be updated for un-envisioned updates.
  */
 
 #ifndef DEFS_CONCURRENCY
@@ -296,7 +300,7 @@ bool concurrency_manager::removeCommonVariable(string lookup)
 			if(result = (get_element->second.second == 0))
 				concurrency_system_parameters.erase(get_element);
 
-			concurrency_critical_section.clear(std::memory_order_acquire);	
+			(get_element->second.first.second).clear(std::memory_order_acquire);	
 		}
 	}
 

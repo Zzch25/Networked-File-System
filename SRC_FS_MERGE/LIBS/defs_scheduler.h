@@ -5,20 +5,25 @@
  *
  *A means to schedule tasks so that they can be run
  *as requested on a schedule
+ *
+ *Mutexes will be employed as tasks can be considered queued.
+ *This voids the atomic logic. Conditionals can be employed to
+ *wake the handler thread.
+ *
+ *Also similarly to handler there are very few guards. The
+ *classes are highly transparent and should be used
+ *appropriately
  */
 
 #ifndef DEFS_SCHEDULER
 #define DEFS_SCHEDULER
 
-//_DEL_
-//Three parameter conflicts are in need of
-//resolution. I'll decide after developing
-//the tree, handler, and scheduler classes
-//
-//This is unusual... However I'm
-//experimenting for the sake of trying
-//something new!
-//_DEL_
+#include <queue>
+#include <list>
+#include <unordered_map>
+#include <functional>
+#include <mutex>
+#include <condition_variable>
 
 #include "defs_debug.h"
 #include "defs_time.h"
@@ -26,18 +31,35 @@
 #include "defs_concurrency.h"
 
 #define SCHEDULER_INTERRUPT_LOCAL_ERROR_COUNTp 1
-#define SCHEDULER_TIMESLICE_LOCAL_ERROR_COUNTp 1
+#define SCHEDULER_INTERRUPT_HANDLER_LOCAL_ERROR_COUNTp 1
+#define SCHEDULER_RUNSLICE_LOCAL_ERROR_COUNTp 1
 
 using namespace std;
 
 /*
- *Offer a means to interrupt execution to attend to
- *scheduled tasks
+ *Setup the needed information towards handlling
+ *requests to run specific functions. No queue is
+ *required as the handler receives then manages
  */
 class scheduler_interrupt : public debug_status
 {
 	private:
-		
+
+		static int
+			scheduler_available_for_offload;
+
+		static mutex
+			scheduler_critical_section_mutex;	
+
+		static condition_variable
+			scheduler_handler_call_condition;
+
+		static queue<int>
+			scheduler_queued_tasks;
+
+		static unordered_map<int, handler_callback>
+			scheduler_interrupt_callbacks;
+
 		enum class scheduler_interrupt_local_errors_lookup
 		{
 			generic_placeholder = 0,
@@ -49,65 +71,136 @@ class scheduler_interrupt : public debug_status
 				"Generic placeholder"
 			};
 
+		friend class scheduler_interrupt_handler;
+
 	public:
 	
 		scheduler_interrupt();
 		~scheduler_interrupt();
 
-		/*
-			_25_..._25_..._25_			
-			_26_..._26_			
-			For lazy vi reg update later, and 25 of course 
+		bool registerFunction(function<void()> function_pointer, int identifier);
+		template <typename... T> bool registerFunctionParameters(void(*function_pointer)(T...), int identifier, T... args);
 
-			_25_registerFunction_25_()_25_
-			_25_updateRegistration_25_()_25_
-			_25_updateRegistrationParameters_25_()_25_
-			_25_removeRegistration_25_()_25_
-			_25_clean_25_()_25_
-		 */
+		bool updateRegistration(int identifier, function<void()> function_pointer);
+		template <typename... T> bool updateRegistrationParameters(int identifier, void(*function_pointer)(T...), T... args);
+		template <typename... T> bool updateRegistrationParametersOnly(int identifier, T... args);
+
+		bool removeRegistration(int identifier);
+
+		void toggleHandlerSignaling();
+		void haltRegistrationHandlers();
+
+		void clean();
 };
 
 /*
- *Utilize a time scheduler for execution of tasks
- *based off a designated time slice algortihm
- *
- *Allow for a threaded and blocking mode
+ *Check for requests to spawn a thread to execute a task
+ *Multiple handlers can be had, however it's use is intended
+ *for one to one.
  */
-class scheduler_timeslice : public debug_status
+class scheduler_interrupt_handler : public debug_status
 {
 	private:
-		
-		enum class scheduler_timeslice_local_errors_lookup
+
+		bool
+			scheduler_handler_set;
+
+		queue<handler_callback>
+			scheduler_stripped_tasks;
+
+		enum class scheduler_interrupt_handler_local_errors_lookup
 		{
 			generic_placeholder = 0,
 		};
 
 		const string
-			scheduler_timeslice_local_errors[SCHEDULER_TIMESLICE_LOCAL_ERROR_COUNTp] =
+			scheduler_interrupt_handler_local_errors[SCHEDULER_INTERRUPT_HANDLER_LOCAL_ERROR_COUNTp] =
+			{
+				"Generic placeholder"
+			};
+
+	public:
+	
+		scheduler_interrupt_handler();
+		~scheduler_interrupt_handler();
+
+		void run();
+
+		/*Quick syntax refresher..We aren't in pthreads anymore
+		static unique_lock<mutex>
+			condition_wait_lock(scheduler_critical_section_mutex);
+
+		scheduler_handler_call_condition.wait(condition_wait_lock, <<<function here>>>);
+
+		scheduler_handler_call_condition.notify_one(); //We don't accept broadcasts here!
+		*/
+};
+
+/*
+ *Utilize a scheduler for execution of tasks
+ *based off a designated slice algortihm
+ *
+ * Note: I have stepped back from time based
+ * because I realize I just nearly got way too
+ * ambitious. Contexts would require porting parts
+ * of my late OS scheduler and that really
+ * is a poor idea. The level of handling required
+ * especially for networked portions decreases
+ * the friendliness of the code. Responsible use
+ * of the assigned tasks is a much better move.
+ *
+ *Run in a blocking mode as it expects user handled
+ *threading
+ */
+class scheduler_runslice : public debug_status
+{
+	private:
+	
+		list<handler_callback>
+			scheduler_priority_queue;
+
+		enum class scheduler_runslice_mode
+		{
+			round_robin = 0,
+			priorty_round_robin,
+			priority_only_round_robin
+		};
+
+		enum class scheduler_runslice_local_errors_lookup
+		{
+			generic_placeholder = 0,
+		};
+
+		const string
+			scheduler_runslice_local_errors[SCHEDULER_RUNSLICE_LOCAL_ERROR_COUNTp] =
 			{
 				"Generic placeholder"
 			};
 		
 	public:
 
-		scheduler_timeslice();
-		~scheduler_timeslice();
+		bool
+			scheduler_terminator;
 
-		/*
-			_25_..._25_..._25_			
-			_26_..._26_			
-			For lazy vi reg update later, and 25 of course 
+		scheduler_runslice();
+		~scheduler_runslice();
 
-			_25_setAlgorithmMode_25_()_25_
-			_25_enqueueRegistration_25_()_25_
-			_25_removeRegistration_25_()_25_
-			_25_updateRegistration_25_()_25_
-			_25_updateRegistrationParameters_25_()_25_
-			_25_updateTerminator_25_()_25_
-			_25_suspendScheduling_25_()_25_
-			_25_startScheduling_25_()_25_
-			_25_clean_25_()_25_
-		 */
+		void setAlgorithmMode(scheduler_runslice::scheduler_runslice_mode designated_allocator);
+
+		bool enqueueRegistration(function<void()> function_pointer, int identifier, bool is_priority);
+		template <typename... T> bool enqueueRegistrationParameters(void(*function_pointer)(T...), int identifier, bool is_priority, T... args);
+
+		bool updateRegistrationPriority(int identifier, bool is_priority);
+		bool updateRegistration(int identifier, function<void()> function_pointer);
+		template <typename... T> bool updateRegistrationParameters(int identifier, void(*function_pointer)(T...), T... args);
+		template <typename... T> bool updateRegistrationParametersOnly(int identifier, T... args);
+
+		bool removeRegistration(int identifier);
+
+		void run();
+
+		void clean();
+
 };
 
 
@@ -133,82 +226,118 @@ scheduler_interrupt::~scheduler_interrupt()
 }
 
 /*
- *Setup a handler with a function and/or
+ *Setup a handler with a function without
+ *parameters or bound parameters for trigger by event
+ *
+ *@PARAM: The parameter free or bound function
+ *@PARAM: The identifier for use in the lookup
+ *@RETURN: If the function could be registered
+ */
+bool scheduler_interrupt::registerFunction(function<void()> function_pointer, int identifier)
+{
+	return 0;
+}
+
+/*
+ *Setup a handler with a function and
  *parameters for trigger by event
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The funtion to be used
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The function arguments
+ *@RETURN: If the function could be registered
  */
-/*
-_26_registerFunction_26_
+template <typename... T>
+bool scheduler_interrupt::registerFunctionParameters(void(*function_pointer)(T...), int identifier, T... args)
 {
-
+	return 0;
 }
-*/
 
 /*
- *Update a handler regarding its function
- *and/or parameters 
+ *Update a registration to a bound or parameter free function
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The parameter free or bound function
+ *@RETURN: If the function could be updated
  */
-/*
-_26_updateRegistration_26_
+bool scheduler_interrupt::updateRegistration(int identifier, function<void()> function_pointer)
 {
-
+	return 0;
 }
-*/
 
 /*
- *Solely update a registers parameters
+ *Setup a handler with a function and
+ *parameters for trigger by event
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The funtion to be used
+ *@PARAM: The function arguments
+ *@RETURN: If the function could be updated
  */
-/*
-_26_updateRegistrationParameters_26_
+template <typename... T>
+bool scheduler_interrupt::updateRegistrationParameters(int identifier, void(*function_pointer)(T...), T... args)
 {
-
+	return 0;
 }
-*/
+
+/*
+ *Update a handler's parameters only
+ *
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The parameters to apply
+ *@RETURN: If the parameters were applied
+ */
+template <typename... T>
+bool scheduler_interrupt::updateRegistrationParametersOnly(int identifier, T... args)
+{
+	return 0;
+}
 
 /*
  *Remove a registration from its handler
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The registration lookup to remove
+ *@RETURN: If the registration was removed
  */
+bool scheduler_interrupt::removeRegistration(int identifier)
+{
+	return 0;
+}
+
 /*
-_26_removeRegistration_26_
+ *Dedicate or halt the caller until set to quit towards
+ *listening for requests to run handlers.
+ */
+void scheduler_interrupt::toggleHandlerSignaling()
 {
 
 }
-*/
 
 /*
- *Wipe the handlers and the structure
- *
- *@PARAM:
- *@RETURN:
+ *Kill the registration handler
  */
-/*
-_26_clean_26_
+void scheduler_interrupt::haltRegistrationHandlers()
 {
 
 }
-*/
 
-//SCHEDULER_TIMESLICE////////////////////////
+/*
+ *Clean the structure for being repurposed
+ *however finish the queue
+ */
+void scheduler_interrupt::clean()
+{
+
+}
+
+//SCHEDULER INTERRUPT HANDLER////////////////
 /////////////////////////////////////////////
 
 /*
  *Generic initializer
- *
- *Allows for configuration without tasks
  */
-scheduler_timeslice::scheduler_timeslice():
-	debug_status(scheduler_timeslice_local_errors, debug_status::getMinClassError() + SCHEDULER_TIMESLICE_LOCAL_ERROR_COUNTp - 1)
+scheduler_interrupt_handler::scheduler_interrupt_handler():
+	debug_status(scheduler_interrupt_handler_local_errors, debug_status::getMinClassError() + SCHEDULER_INTERRUPT_HANDLER_LOCAL_ERROR_COUNTp - 1)
 {
 }
 
@@ -216,115 +345,151 @@ scheduler_timeslice::scheduler_timeslice():
  *Generic cleanup placeholder for transparent cleaning
  *of otherwise ambiguous or user defined data
  */
-scheduler_timeslice::~scheduler_timeslice()
+scheduler_interrupt_handler::~scheduler_interrupt_handler()
 {
 }
 
 /*
- *Modify the allowed timeslice allocator
- *
- *@PARAM:
- *@RETURN:
+ *Run the handler cycle
  */
-/*
-_26_setAlgorithmMode_26_
+void scheduler_interrupt_handler::run()
 {
 
 }
-*/
+
+//SCHEDULER RUNSLICE////////////////////////
+/////////////////////////////////////////////
 
 /*
- *Enlist a new handler registration with
- *parameters
+ *Generic initializer
  *
- *@PARAM:
- *@RETURN:
+ *Allows for configuration without tasks
  */
+scheduler_runslice::scheduler_runslice():
+	debug_status(scheduler_runslice_local_errors, debug_status::getMinClassError() + SCHEDULER_RUNSLICE_LOCAL_ERROR_COUNTp - 1)
+{
+}
+
 /*
-_26_enqueueRegistration_26_
+ *Generic cleanup placeholder for transparent cleaning
+ *of otherwise ambiguous or user defined data
+ */
+scheduler_runslice::~scheduler_runslice()
+{
+}
+
+/*
+ *Modify the allowed runslice allocator
+ */
+void scheduler_runslice::setAlgorithmMode(scheduler_runslice::scheduler_runslice_mode designated_allocator)
 {
 
 }
-*/
+
+/*
+ *Setup a handler with a function without
+ *parameters or bound parameters for trigger by event
+ *and enqueue it
+ *
+ *@PARAM: The parameter free or bound function
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: If the handler is of function
+ *@RETURN: If the function could be registered
+ */
+bool scheduler_runslice::enqueueRegistration(function<void()> function_pointer, int identifier, bool is_priority)
+{
+	return 0;
+}
+
+/*
+ *Setup a handler with a function and
+ *parameters for trigger by event and enqueue it
+ *
+ *@PARAM: The funtion to be used
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: If the handler is of priority
+ *@PARAM: The function arguments
+ *@RETURN: If the function could be registered
+ */
+template <typename... T>
+bool scheduler_runslice::enqueueRegistrationParameters(void(*function_pointer)(T...), int identifier, bool is_priority, T... args)
+{
+	return 0;
+}
+
+/*
+ *Update a registration's priority
+ *
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: If the handler is of priority
+ *@RETURN: If the function could be updated
+ */
+bool scheduler_runslice::updateRegistrationPriority(int identifier, bool is_priority)
+{
+	return 0;
+}
+
+/*
+ *Update a registration to a bound or parameter free function
+ *
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The parameter free or bound function
+ *@RETURN: If the function could be updated
+ */
+bool scheduler_runslice::updateRegistration(int identifier, function<void()> function_pointer)
+{
+	return 0;
+}
+
+/*
+ *Setup a handler with a function and
+ *parameters for trigger by event
+ *
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The funtion to be used
+ *@PARAM: The function arguments
+ *@RETURN: If the function could be updated
+ */
+template <typename... T>
+bool scheduler_runslice::updateRegistrationParameters(int identifier, void(*function_pointer)(T...), T... args)
+{
+	return 0;
+}
+
+/*
+ *Update a handler's parameters only
+ *
+ *@PARAM: The identifier for use in the lookup
+ *@PARAM: The parameters to apply
+ *@RETURN: If the parameters were applied
+ */
+template <typename... T>
+bool scheduler_runslice::updateRegistrationParametersOnly(int identifier, T... args)
+{
+	return 0;
+}
 
 /*
  *Remove a registration from the queue
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The registration lookup to remove
+ *@RETURN: If the registration was removed
  */
-/*
-_26_removeRegistration_26_
+bool scheduler_runslice::removeRegistration(int identifier)
 {
-
+	return 0;
 }
-*/
 
 /*
- *Update a registration by function and/or
- *parameters
+ *Run the scheduler
  *
  *@PARAM:
  *@RETURN:
  */
-/*
-_26_updateRegistration_26_
+void scheduler_runslice::run()
 {
 
 }
-*/
-
-/*
- *Update a registrations parameters only
- *
- *@PARAM:
- *@RETURN:
- */
-/*
-_26_updateRegistrationParameters_26_
-{
-
-}
-*/
-
-/*
- *Halt the scheduler
- *
- *@PARAM:
- *@RETURN:
- */
-/*
-_26_suspendScheduling_26_
-{
-
-}
-*/
-
-/*
- *Resume the scheduler
- *
- *@PARAM:
- *@RETURN:
- */
-/*
-_26_startScheduling_26_
-{
-
-}
-*/
-
-/*
- *Modify the terminating function
- *
- *@PARAM:
- *@RETURN:
- */
-/*
-_26_updateTerminator_26_
-{
-
-}
-*/
 
 /*
  *Wipe the scheduler structure
@@ -332,12 +497,10 @@ _26_updateTerminator_26_
  *@PARAM:
  *@RETURN:
  */
-/*
-_26_clean_26_
+void scheduler_runslice::clean()
 {
 
 }
-*/
 
 //QA/////////////////////////////////////////
 /////////////////////////////////////////////
