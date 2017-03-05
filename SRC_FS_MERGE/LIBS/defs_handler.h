@@ -134,18 +134,13 @@ void handler_callback::setBoundOrFreeFunction(function<void()> function_pointer)
 template <typename... T>
 void handler_callback::setParameters(T... args)
 {
-	function<void(*)(T...)>
-		function_pointer;
-
 	assert(!handler_function_parameter_free);
-
-	function_pointer = (void(*)(T...))(handler_unbound_function_pointer);
 
 	//I'm unsure if C++ will allow this in the event of no parameters.
 	//From what I read, it won't. Which would be kind to users and
 	//a nice loving slap in the face if they don't read my comments!
 	//I'll check this in testing. I'm shaky on expansions. It's been a while
-	handler_formatted_function = bind(function_pointer, args...);
+	handler_formatted_function = bind((void(*)(T...))handler_unbound_function_pointer, args...);
 };
 
 /*
