@@ -3,6 +3,14 @@
  *
  *defs_handler.h
  *
+ * NOTE, no debugging overhead will be had in the
+ * callback portion. This may be latter expanded so
+ * the include will stay. Callback shall not waste
+ * overhead when it is too simple not to mess up.
+ * also handling errors spawned before a call is
+ * even made within the scheduler should NOT be 
+ * encouraged...
+ *
  *For the assignment, storage, and management
  *of functions for callback
  */
@@ -10,16 +18,9 @@
 #ifndef DEFS_HANDLER
 #define DEFS_HANDLER
 
-//_DEL_
-//Three parameter conflicts are in need of
-//resolution. I'll decide after developing
-//the tree, handler, and scheduler classes
-//
-//This is unusual... However I'm
-//experimenting for the sake of trying
-//something new!
-//_DEL_
+#include <functional>
 
+//Again staying in the event of expansion
 #include "defs_debug.h"
 
 #define HANDLER_CALLBACK_LOCAL_ERROR_COUNTp 1
@@ -30,35 +31,28 @@ using namespace std;
  *A structure for the storage and management
  *of functions
  */
-class handler_callback : public debug_status
+class handler_callback
 {
 	private:
 		
-		enum class handler_callback_local_errors_lookup
-		{
-			generic_placeholder = 0,
-		};
+		bool
+			handler_function_parameter_free;
 
-		const string
-			handler_callback_local_errors[HANDLER_CALLBACK_LOCAL_ERROR_COUNTp] =
-			{
-				"Generic placeholder"
-			};
+		void
+			*handler_unbound_function_pointer;
+
+		function<void()>
+			handler_formatted_function;
 
 	public:
 		
-		handler_callback();
+		handler_callback(auto bound_or_free_function = nullptr);
 		~handler_callback();
 
-		/*
-			_25_..._25_..._25_			
-			_26_..._26_			
-			For lazy vi reg update later, and 25 of course 
-
-			_25_setFunction_25_()_25_
-			_25_setParameters_25_()_25_
-			_25_run_25_()_25_
-		 */
+		template <typename... T> void setFunction(void(*function_pointer)(T...), T... args);
+		void setBoundOrFreeFunction(function<void()> function_pointer);
+		template <typename... T> void setParameters(T... args);
+		void run();
 };
 
 //HANDLER CALLBACK///////////////////////////
@@ -68,11 +62,18 @@ class handler_callback : public debug_status
  *Generic initializer
  *
  *Placeholder for generic initialization of the
- *handler data for callback
+ *handler allowing for a bound or parameter
+ *free function
+ *
+ *@PARAM: A bound or free function
  */
-handler_callback::handler_callback():
-	debug_status(handler_callback_local_errors, debug_status::getMinClassError() + HANDLER_CALLBACK_LOCAL_ERROR_COUNTp - 1)
+handler_callback::handler_callback(auto bound_or_free_function):
+	handler_formatted_function(bound_or_free_function)
 {
+	if(handler_formatted_function == nullptr)
+		handler_function_parameter_free = true;
+	else
+		handler_function_parameter_free = false;
 }
 
 /*
@@ -85,43 +86,79 @@ handler_callback::~handler_callback()
 
 /*
  *Load the function to the callback object
+ *using template specified parameters.
+ *Responsibility lays with the user to 
+ *use these functions correctly. The use
+ *cases are obvious. Errors in calling will
+ *blow up.
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The function pointer to store and assign
+ *@PARAM: The templated variadic function arguments
  */
-/*
-_26_setFunction_26_
+template <typename... T>
+void handler_callback::setFunction(void(*function_pointer)(T...), T... args)
 {
+	//I'm unsure if C++ will allow this in the event of no parameters.
+	//From what I read, it won't. Which would be kind to users and
+	//a nice loving slap in the face if they don't read my comments!
+	//I'll check this in testing. I'm shaky on expansions. It's been a while
+	handler_formatted_function = bind(function_pointer, args...);
+	handler_unbound_function_pointer = (void*)function_pointer;
+	
+	handler_function_parameter_free = false;
+};
 
+/*
+ *Load the function to the callback object
+ *with pre-bound or no parameters. This is to
+ *eliminate uneeded overhead. Responsibility
+ *lays with the user to use these functions
+ *correctly. The use cases are obvious. Errors
+ *in calling will blow up.
+ *
+ *@PARAM: The function to store
+ */
+void handler_callback::setBoundOrFreeFunction(function<void()> function_pointer)
+{
+	handler_formatted_function = function_pointer;
+
+	handler_function_parameter_free = true;
 }
-*/
 
 /*
  *Load or update the function parameters for the
  *callback object
  *
- *@PARAM:
- *@RETURN:
+ *@PARAM: The templated variadic function arguments
  */
-/*
-_26_setParameters_26_
+template <typename... T>
+void handler_callback::setParameters(T... args)
 {
+	function<void(*)(T...)>
+		function_pointer;
 
-}
-*/
+	assert(!handler_function_parameter_free);
+
+	function_pointer = (void(*)(T...))(handler_unbound_function_pointer);
+
+	//I'm unsure if C++ will allow this in the event of no parameters.
+	//From what I read, it won't. Which would be kind to users and
+	//a nice loving slap in the face if they don't read my comments!
+	//I'll check this in testing. I'm shaky on expansions. It's been a while
+	handler_formatted_function = bind(function_pointer, args...);
+};
 
 /*
- *Run the callback
- *
- *@PARAM:
- *@RETURN:
+ *Run the stored callback
  */
-/*
-_26_run_26_
+void handler_callback::run()
 {
-
+	//I don't think this is necesary, but this is more a
+	//forgetfull guard
+	assert(handler_formatted_function != nullptr);
+	
+	handler_formatted_function();
 }
-*/
 
 //QA/////////////////////////////////////////
 /////////////////////////////////////////////
