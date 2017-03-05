@@ -20,9 +20,6 @@
 
 #include <functional>
 
-//Again staying in the event of expansion
-#include "defs_debug.h"
-
 #define HANDLER_CALLBACK_LOCAL_ERROR_COUNTp 1
 
 using namespace std;
