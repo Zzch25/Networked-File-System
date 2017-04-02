@@ -167,7 +167,6 @@ class scheduler_interrupt : public debug_status
 				"Queue_is_empty",
 			};
 
-		static function<void(int)> handlerSignalFunction;
 		void handlerUpdateAndRun(int signal);
 
 		template <typename... T> inline bool registerShared(int identifier, void(*function_pointer)(T...), scheduler_interrupt_signal_queues_offsets signal_type, bool persist, T... args);
@@ -532,8 +531,8 @@ scheduler_interrupt::scheduler_interrupt():
 
 	for(auto iterator : scheduler_signal_value_lookup)
 	{
-		handlerSignalFunction = function<void(int)>([this](int signal){this->handlerUpdateAndRun(signal);});
-		signal(iterator, *handlerSignalFunction.target<void(*)(int)>());
+		auto ThandlerSignalFunction = function<void(int)>([this](int signal){this->handlerUpdateAndRun(signal);});
+		signal(iterator, *ThandlerSignalFunction.target<void(*)(int)>());
 	}
 }
 
