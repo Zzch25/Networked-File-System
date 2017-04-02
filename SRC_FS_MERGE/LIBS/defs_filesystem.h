@@ -68,7 +68,7 @@ class filesystem_head : public debug_status
 			filesystem_directory_known;
 
 		char
-			filesystem_node_delimiter;
+			filesystem_node_delimeter;
 
 		string
 			filesystem_current_directory;	
@@ -82,22 +82,13 @@ class filesystem_head : public debug_status
 		function<int(char*, struct FILESYSTEM_STAT_STRUCTp *)>
 			filesystem_get_file_status_function;
 	
-		#if defined _WIN32 || defined _WIN64 //Assume fileops is fairly uniform in nix for now
-			
-			function<int(char*)>
-				filesystem_create_directory_function;
-		
-		#else
-
-			function<int(char*)>
-				filesystem_create_directory_function;
-		
-		#endif
+		function<int(char*)>
+			filesystem_create_directory_function;
 
 		function<int(char*)>
 			filesystem_remove_directory_function;
 
-		function<int(char*)>
+		function<int(const char*)>
 			filesystem_remove_file_function;
 
 		struct FILESYSTEM_STAT_STRUCTp
@@ -124,12 +115,13 @@ class filesystem_head : public debug_status
 
 	public:
 		
-		filesystem_head(string set_current_directory);
+		filesystem_head(string set_current_directory = "");
 		~filesystem_head();
 
 		inline bool fileExists(string file_path);
 		inline bool directoryExists(string directory_path);
 
+		bool setRoot(string root);
 		bool changeDirectory(string directory);
 		bool stepBackDirectory(int steps_backward);
 		bool stepForwardDirectory(string target_node);
@@ -154,8 +146,7 @@ class filesystem_head : public debug_status
  */
 filesystem_head::filesystem_head(string set_current_directory):
 	debug_status(filesystem_local_errors, debug_status::getMinClassError() + FILESYSTEM_HEAD_LOCAL_ERROR_COUNTp - 1),
-	filesystem_current_directory(set_current_directory),
-	filesystem_directory_known(true)
+	filesystem_current_directory(set_current_directory)
 {
 	#if defined _WIN32 || defined _WIN64 //Assume fileops is fairly uniform in nix for now
 		
@@ -164,9 +155,9 @@ filesystem_head::filesystem_head(string set_current_directory):
 		filesystem_get_file_status_function = _stat;
 		filesystem_create_directory_function = _mkdir;
 		filesystem_remove_directory_function = _rmdir;
-		filesystem_remove_file_function = remove;
+		filesystem_remove_file_function = _unlink;
 
-		node_delimeter = FILESYSTEM_HEAD_WINDOWS_NODE_DELIMETERp;
+		filesystem_node_delimeter = FILESYSTEM_HEAD_WINDOWS_NODE_DELIMETERp;
 
 	#else
 
@@ -176,11 +167,13 @@ filesystem_head::filesystem_head(string set_current_directory):
 		//TO be better updated during testing
 		filesystem_create_directory_function = bind(mkdir,placeholders::_1, S_IRWXU | S_IRWXG | S_IROTH | S_IXOTH);
 		filesystem_remove_directory_function = rmdir;
-		filesystem_remove_file_function = remove;
+		filesystem_remove_file_function = unlink;
 
-		filesystem_node_delimiter = FILESYSTEM_HEAD_NIX_NODE_DELIMETERp;
+		filesystem_node_delimeter = FILESYSTEM_HEAD_NIX_NODE_DELIMETERp;
 
 	#endif
+
+	filesystem_directory_known = set_current_directory != "";
 }
 
 /*
@@ -218,6 +211,37 @@ bool filesystem_head::directoryExists(string directory_path)
 }
 
 /*
+ *Set the root string for use in changing directory
+ *
+ * No checking will be offered here
+ *
+ *@PARAM: The root string 
+ */
+bool filesystem_head::setRoot(string root)
+{
+	bool
+		result;
+
+	result = false;
+
+	filesystem_current_directory = root;
+	filesystem_directory_known = true;
+
+	if(filesystem_current_directory != "")
+	{
+		if(filesystem_current_directory[filesystem_current_directory.size() - 1] == filesystem_node_delimeter)
+		{
+			filesystem_current_directory.resize(filesystem_current_directory.size() - 1);
+			filesystem_current_directory.shrink_to_fit();
+			
+			result = filesystem_change_directory_function((char *)filesystem_current_directory.c_str());
+		}
+	}
+
+	return result;
+}
+
+/*
  *Seek the new directory specified
  *
  * I am going to assume during testing I'll find this
@@ -234,6 +258,9 @@ bool filesystem_head::changeDirectory(string directory)
 	char
 		*new_working_directory;
 
+	string
+		complete_directory;
+
 	//Again this is aimed to be more of a temporary measure until
 	//the software is tested in its desired enviorments
 	assert(filesystem_directory_known);
@@ -241,20 +268,19 @@ bool filesystem_head::changeDirectory(string directory)
 	result = false;
 	new_working_directory = nullptr;
 	
+	//For debugging clarity
+	complete_directory = filesystem_current_directory;
+	complete_directory.push_back(filesystem_node_delimeter);
+	if(directory[directory.size() - 1] != filesystem_node_delimeter)
+		complete_directory.append(directory);
+	else
+		complete_directory.append(directory.substr(0, directory.size() - 1)); //verify
+
 	//in place manipultion?
-	if(result = filesystem_change_directory_function((char *)directory.c_str())) //YES, -1 is non zero therefore true		
+	if(result = filesystem_change_directory_function((char *)complete_directory.c_str())) //YES, -1 is non zero therefore true		
 	{
-		if((new_working_directory = filesystem_get_directory_function(0, 0)) != NULL)
-		{
-			filesystem_current_directory.assign(new_working_directory);
-			free(new_working_directory);
-		}
-		else
-		{
-			result = false;
-			filesystem_directory_known = false;
-			setReturnCode((int)filesystem_local_errors_lookup::cannot_update_directory);
-		}
+		filesystem_current_directory.assign(complete_directory);
+		result = true;
 	}
 	else
 		setReturnCode((int)filesystem_local_errors_lookup::cannot_change_directory);
@@ -296,12 +322,13 @@ bool filesystem_head::stepBackDirectory(int steps_backward = 0)
 	for(matched_delimeters = 0, string_index = parent_directory.size() - 1;
 				matched_delimeters < steps_backward && string_index >= 0;
 					--string_index)
-		matched_delimeters += parent_directory[string_index] == filesystem_node_delimiter;
+		matched_delimeters += parent_directory[string_index] == filesystem_node_delimeter;
 
 	if(matched_delimeters == steps_backward)
 	{
 		parent_directory.resize(string_index + 1);
 		result = changeDirectory(parent_directory);
+		filesystem_current_directory = parent_directory;
 	}
 
 	//Error set in the changeDirectory call if needed
@@ -322,6 +349,11 @@ bool filesystem_head::stepBackDirectory(int steps_backward = 0)
  */
 bool filesystem_head::stepForwardDirectory(string target_node)
 {
+	bool
+		result;
+
+	result = false;
+
 	//Again this is aimed to be more of a temporary measure until
 	//the software is tested in its desired enviorments
 	assert(filesystem_directory_known);
@@ -330,9 +362,9 @@ bool filesystem_head::stepForwardDirectory(string target_node)
 	//comment! Modified directory expected from the working one. IF
 	//it is so similar... This function may be deprecated unless
 	//found syntactically pleasing
-	changeDirectory(target_node);
+	result = changeDirectory(target_node);
 
-	return 0;
+	return result;
 }
 
 /*
@@ -392,10 +424,10 @@ shared_ptr<vector<pair<string, bool>>> filesystem_head::listCurrentDirectory(str
 	if(current_directory == "")
 	{
 		current_directory.assign(".");
-		current_directory += filesystem_node_delimiter;
+		current_directory += filesystem_node_delimeter;
 	}
-	else if(current_directory.back() != filesystem_node_delimiter)
-		current_directory += filesystem_node_delimiter;
+	else if(current_directory.back() != filesystem_node_delimeter)
+		current_directory += filesystem_node_delimeter;
 
 	if((directory_descriptor = opendir(current_directory.c_str())) != NULL)
 	{
@@ -472,8 +504,10 @@ bool filesystem_head::removeDirectory(string directory = ".")
 	//In place manipulation?
 	if(!(result = filesystem_remove_directory_function((char*)directory.c_str()) == 0))
 		setReturnCode((int)filesystem_local_errors_lookup::cannot_remove_directory);
+	else
+		result = true;
 
-	return 0;
+	return result;
 }
 
 /*
