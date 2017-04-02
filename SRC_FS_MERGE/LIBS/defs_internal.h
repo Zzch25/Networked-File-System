@@ -6,16 +6,6 @@
  *Generic algorithms and structures reside here
  *For example tree structures
  *
- *
- *	NOTE:
- *
- *	B R O K E N !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- *
- *	This is still in progress. It's very broken :)
- *	just an idea placeholder so that I can patch it up
- *	when I have time to come back to it
- *
- *
  *Some of these structures will not submit to
  *debugging standards to lower unneeded overhead
  */
@@ -418,6 +408,16 @@ void internal_unbalanced_tree<node_data_T>::clean()
 
 //INTERNAL UNBALANCED TREE FILESYSTEM////////
 /////////////////////////////////////////////
+
+/*
+ *For use in creating the node data structure
+ *This is for expansion if needed
+ */
+internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_data_struct():
+	host(""),
+	file_content(nullptr)
+{
+}
 
 /*
  *For use in creating the node data structure

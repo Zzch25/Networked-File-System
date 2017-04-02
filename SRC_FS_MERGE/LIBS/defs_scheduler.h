@@ -10,16 +10,6 @@
  *This voids the atomic logic. Conditionals can be employed to
  *wake the handler thread.
  *
- *
- *	NOTE:
- *	
- *	B R O K E N !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
- *
- *	This is still in progress. It's very broken :)
- *	just an idea placeholder so that I can patch it up
- *	when I have time to come back to it
- *
- *
  *Also similarly to handler there are very few guards. The
  *classes are highly transparent and should be used
  *appropriately
@@ -68,21 +58,6 @@ using namespace std;
 
 				Consider this temporary "bolted on"
 				logic
-
-
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				ALSO it's going to blow up with the
-				temporary references. I'm going
-				to patch it all over to smart
-				pointers!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-				!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
  *REQUIRES proper use. Obviously multiple objects
  *could be used. This however
@@ -151,6 +126,9 @@ class scheduler_interrupt : public debug_status
 				{scheduler_signal_value_lookup[(int)scheduler_interrupt_signal_queues_offsets::sigusr1], (int)scheduler_interrupt_signal_queues_offsets::sigusr1},
 				{scheduler_signal_value_lookup[(int)scheduler_interrupt_signal_queues_offsets::sigusr2], (int)scheduler_interrupt_signal_queues_offsets::sigusr2}
 			};
+
+		function<void(int)>
+			scheduler_function_references[SCHEDULER_INTERRUPT_SIGNAL_COUNTp];
 
 		enum class scheduler_interrupt_local_errors_lookup
 		{
@@ -293,7 +271,6 @@ class scheduler_runslice : public debug_status
 		void clean();
 
 };
-
 
 //SCHEDULER INTERRUPT////////////////////////
 /////////////////////////////////////////////
@@ -516,10 +493,6 @@ bool scheduler_interrupt::updateSharedHelper(int identifier, unordered_map<int, 
 /*
  *Generic initializer
  *
- * Another point that needs fixing
- * obviously out of scope compiler only
- * fix
- *
  *Allows for configuration without including tasks
  */
 scheduler_interrupt::scheduler_interrupt():
@@ -527,12 +500,15 @@ scheduler_interrupt::scheduler_interrupt():
 	scheduler_available_for_offload(false),
 	scheduler_is_initialized(ATOMIC_FLAG_INIT)
 {
+	int
+		iterator;
+
 	assert(scheduler_is_initialized.test_and_set());
 
-	for(auto iterator : scheduler_signal_value_lookup)
+	for(iterator = 0; iterator < scheduler_signal_value_reverse_lookup.size(); ++iterator)
 	{
-		auto ThandlerSignalFunction = function<void(int)>([this](int signal){this->handlerUpdateAndRun(signal);});
-		signal(iterator, *ThandlerSignalFunction.target<void(*)(int)>());
+		scheduler_function_references[iterator] = function<void(int)>([this](int signal){this->handlerUpdateAndRun(signal);});
+		signal(iterator, *(scheduler_function_references[iterator]).target<void(*)(int)>());
 	}
 }
 
@@ -773,9 +749,7 @@ bool scheduler_runslice::enqueueSharedParameterFree(int identifier, void(*functi
 
 /*
  *General enqueue function for code compaction
- *and maintainability. Enqueue a handler into the
- *specified queue for use when ready.
- *
+
  *@PARAM: Verify the idenitifier is not taken
  *@RETURN: If the identifier
  */
