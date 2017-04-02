@@ -9,6 +9,8 @@
  *
  *	NOTE:
  *
+ *	B R O K E N !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+ *
  *	This is still in progress. It's very broken :)
  *	just an idea placeholder so that I can patch it up
  *	when I have time to come back to it
