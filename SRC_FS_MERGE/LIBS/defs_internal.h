@@ -13,6 +13,7 @@
 #ifndef DEFS_INTERNAL
 #define DEFS_INTERNAL
 
+#include <memory>
 #include <string>
 #include <sstream>
 #include <algorithm>
@@ -126,12 +127,12 @@ class internal_unbalanced_tree_filesystem
 				host,
 				lookup;
 
-			char
-				*file_content;
+			shared_ptr<char>
+				file_content;
 
 			internal_node_data_struct();
-			internal_node_data_struct(bool is_foreign, bool is_directory, string lookup, string host = "", char *file_content = nullptr);
-			void set(bool is_foreign, bool is_directory, string lookup, string host = "", char *file_content = nullptr);
+			internal_node_data_struct(bool is_foreign, bool is_directory, string lookup, string host = "", shared_ptr<char> file_content = nullptr);
+			void set(bool is_foreign, bool is_directory, string lookup, string host = "", shared_ptr<char> file_content = nullptr);
 		};
 		typedef struct internal_node_data_struct internal_node_data;
 
@@ -439,7 +440,7 @@ internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_da
  *@PARAM: The host of the node
  *@PARAM: The content of the node if it is a file
  */
-internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_data_struct(bool is_foreign, bool is_directory, string lookup, string host, char *file_content)
+internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_data_struct(bool is_foreign, bool is_directory, string lookup, string host, shared_ptr<char> file_content)
 {
 	if(!is_foreign)
 	{
@@ -460,7 +461,7 @@ internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_da
  *@PARAM: The host of the node
  *@PARAM: The content of the node if it is a file
  */
-void internal_unbalanced_tree_filesystem::internal_node_data_struct::set(bool is_foreign, bool is_directory, string lookup, string host, char *file_content)
+void internal_unbalanced_tree_filesystem::internal_node_data_struct::set(bool is_foreign, bool is_directory, string lookup, string host, shared_ptr<char> file_content)
 {
 	if(!is_foreign)
 	{
@@ -609,13 +610,22 @@ bool internal_unbalanced_tree_filesystem::setFilesystemOffset(string offset)
 bool internal_unbalanced_tree_filesystem::updateRepresentation()
 {
 	bool
+		write_failed,
+		path_change_failed,
+		path_failure,
 		result;
 
 	int
 		last_level;
 
+	long int
+		file_size;
+
 	pair<int, string>
 		traversal_stack_top;
+
+	shared_ptr<char>
+		get_file;
 
 	stack<pair<int, string>>
 		traversal_stack;
@@ -623,6 +633,8 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
 	assert(internal_offset_armed);
 
 	result = false;
+	write_failed = false;
+	path_failure = false;
 	last_level = 0;
 
 	if(!filesystem_reader.listCurrentDirectory()->empty())
@@ -642,12 +654,29 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
 				filesystem_reader.stepBackDirectory();
 			}
 
-			pathChangeInline(traversal_stack_top.second, true);
+			path_change_failed = traversal_stack_top.second != pathChangeInline(traversal_stack_top.second, true);
+			path_failure |= path_change_failed;
 
-			++last_level;
-			for(auto get_iterator : internal_filesystem_tree.internal_heap_pointer->children)
-				traversal_stack.push(pair<int, string>(last_level, get_iterator.element.name));
+			if(!path_change_failed)
+			{
+				++last_level;
+				for(auto get_iterator : *(filesystem_reader.listCurrentDirectory()))
+				{
+					if(get_iterator.second)
+					{
+						get_file = filesystem_reader.getFile(get_iterator.first, &file_size);
+						if(get_file == nullptr)
+							filesystem_reader.createFile(get_iterator.first, get_file, true, file_size);
+						else
+							write_failed = true;
+					}
+					else
+						traversal_stack.push(pair<int, string>(last_level, get_iterator.first));
+				}
+			}
 		}
+
+		result = !write_failed & !path_failure;
 		
 		internal_filesystem_tree.internal_heap_pointer = &internal_filesystem_tree.internal_head;
 	}

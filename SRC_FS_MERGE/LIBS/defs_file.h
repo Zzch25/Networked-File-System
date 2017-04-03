@@ -53,7 +53,7 @@ class file_descriptor
 		~file_descriptor();
 
 		void write_file(const char* custom, long int size);
-		char* read_file_binary(long int *size);
+		shared_ptr<char> read_file_binary(long int *size);
 		string read_file_string(long int *size);
 		void write_newline();
 		istream &operator>>(istream &input);
@@ -109,7 +109,7 @@ void file_descriptor::write_file(const char* custom, long int size)
  *
  *@RETURN: The file in string format
  */
-char* file_descriptor::read_file_binary(long int *size)
+shared_ptr<char> file_descriptor::read_file_binary(long int *size)
 {
 	assert(!is_write);
 
@@ -120,7 +120,7 @@ char* file_descriptor::read_file_binary(long int *size)
 	shared_ptr<char> file_data(new char[*size]);
 	file_instance.read(&(file_data.get()[0]), (int)*size);
 
-	return file_data.get();
+	return file_data;
 }
 
 /*

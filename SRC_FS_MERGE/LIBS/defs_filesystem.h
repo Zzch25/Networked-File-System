@@ -133,7 +133,8 @@ class filesystem_head : public debug_status
 		bool makeDirectory(string directory);
 		bool removeDirectory(string directory);
 
-		bool createFile(string file_name, const char* content, bool is_binary_file);
+		bool createFile(string file_name, shared_ptr<char> content, bool is_binary_file, long int size = -1);
+		shared_ptr<char> getFile(string file_name, long int *size);
 		bool deleteFile(string file_name);
 };
 
@@ -530,7 +531,7 @@ bool filesystem_head::removeDirectory(string directory = ".")
  *@PARAM: If the file is binary
  *@RETURN: If the file was successfully created 
  */
-bool filesystem_head::createFile(string file_name, const char* content, bool is_binary_file)
+bool filesystem_head::createFile(string file_name, shared_ptr<char> content, bool is_binary_file, long int size)
 {
 	bool
 		result;
@@ -544,9 +545,37 @@ bool filesystem_head::createFile(string file_name, const char* content, bool is_
 	//the software is tested in its desired enviorments
 	assert(filesystem_directory_known);
 
-	file_to_write.write_file(content, strlen(content));	
+	if(size == -1)
+		file_to_write.write_file((const char*)content.get(), strlen(content.get()));	
+	else
+		file_to_write.write_file((const char*)content.get(), size);	
 
 	return result; // MODIFY
+}
+
+/*
+ *Get a file in the current directory
+ * 
+ *@PARAM: The file to get
+ *@RETURN: A pointer to the specified file
+ */
+shared_ptr<char> filesystem_head::getFile(string file_name, long int *size)
+{
+	string
+		complete_path;
+
+	complete_path = filesystem_current_directory;
+	complete_path.push_back(filesystem_node_delimeter);
+	complete_path.append(file_name);
+
+	file_descriptor
+		target_file(complete_path, file_descriptor::file_mode_e::binary);
+
+	//Again this is aimed to be more of a temporary measure until
+	//the software is tested in its desired enviorments
+	assert(filesystem_directory_known);	
+
+	return target_file.read_file_binary(size);
 }
 
 /*
