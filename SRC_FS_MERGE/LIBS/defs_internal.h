@@ -13,6 +13,8 @@
 #ifndef DEFS_INTERNAL
 #define DEFS_INTERNAL
 
+#include <string>
+#include <sstream>
 #include <algorithm>
 #include <iterator>
 #include <vector>
@@ -59,7 +61,7 @@ class internal_unbalanced_tree
 		{
 			struct internal_node_container_struct *parent;
 			//The boolean represents if the child is a directory
-			vector<struct internal_node_container_struct*> children;
+			vector<struct internal_node_container_struct> children;
 
 			node_data_T element;
 
@@ -67,12 +69,11 @@ class internal_unbalanced_tree
 		};
 		typedef struct internal_node_container_struct internal_node_container;
 
-		//lazy means to maintain a head
-		internal_node_container
+		struct internal_node_container_struct
 			internal_head,
 			*internal_heap_pointer;
 
-		stack<internal_node_container*>
+		stack<struct internal_node_container_struct*>
 			internal_bfs_stack;
 
 		friend class internal_unbalanced_tree_filesystem;
@@ -85,7 +86,7 @@ class internal_unbalanced_tree
 		internal_unbalanced_tree();
 		~internal_unbalanced_tree();
 
-		bool addNode(internal_node_container child);
+		bool addNode(struct internal_node_container_struct child);
 		bool removeNode(string name = "");
 		node_data_T getNode(string name = "");
 		bool moveUp();
@@ -96,10 +97,19 @@ class internal_unbalanced_tree
 /*
  *A structure intended for use in representing
  *the host filesystem and other uses
+ *
+ * WRAPPING MUST BE DONE ABOVE to cure 
+ * calls to the .. operator
+ *
+ *The redun. function similarities will be
+ *compacted post optimization
  */
 class internal_unbalanced_tree_filesystem
 {
 	private:
+
+		bool
+			internal_offset_armed;
 
 		int
 			internal_map_iterator;
@@ -121,11 +131,13 @@ class internal_unbalanced_tree_filesystem
 
 			internal_node_data_struct();
 			internal_node_data_struct(bool is_foreign, bool is_directory, string lookup, string host = "", char *file_content = nullptr);
+			void set(bool is_foreign, bool is_directory, string lookup, string host = "", char *file_content = nullptr);
 		};
 		typedef struct internal_node_data_struct internal_node_data;
 
-		list<internal_node_data>
-			internal_current_path;
+		//FOR optimization later
+		//list<internal_node_data>
+		//	internal_current_path;
 
 		map<string, list<internal_node_data>>
 			internal_foreign_nodes;
@@ -136,7 +148,7 @@ class internal_unbalanced_tree_filesystem
 		internal_unbalanced_tree<internal_node_data>
 			internal_filesystem_tree;
 
-		string pathChangeInline(bool keep_move);	
+		string pathChangeInline(string path, bool keep_move);	
 
 	public:
 	
@@ -231,7 +243,6 @@ void internal_unbalanced_tree<node_data_T>::bfsClear()
  */
 template <typename node_data_T>
 internal_unbalanced_tree<node_data_T>::internal_unbalanced_tree():
-	internal_head(),
 	internal_heap_pointer(&internal_head)
 {
 }
@@ -252,14 +263,14 @@ internal_unbalanced_tree<node_data_T>::~internal_unbalanced_tree()
  *@RETURN: If the node was added
  */
 template <typename node_data_T>
-bool internal_unbalanced_tree<node_data_T>::addNode(internal_node_container child)
+bool internal_unbalanced_tree<node_data_T>::addNode(struct internal_node_container_struct child)
 {
 	bool
 		result;
 
 	result = true;
 
-	internal_heap_pointer->children.emplace(child);
+	internal_heap_pointer->children.emplace(internal_heap_pointer->children.end(), child);
 	
 	return result;
 }
@@ -379,11 +390,11 @@ bool internal_unbalanced_tree<node_data_T>::moveDown(string name)
 
 	auto get_iterator = find_if(	internal_heap_pointer->children.begin(),
 											internal_heap_pointer->children.end(), 
-											[name](auto child){return (bool)!child.element.compareTo(name);});
+											[name](auto child){return (bool)(child.element.name == name);});
 	result = get_iterator != internal_heap_pointer->children.end();
 
 	if(result)
-		internal_heap_pointer = get_iterator;
+		internal_heap_pointer = &*get_iterator;
 
 	return result;
 }
@@ -441,6 +452,27 @@ internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_da
 }
 
 /*
+ *For use in creating the node data structure
+ *
+ *@PARAM: If the data is not locally hosted
+ *@PARAM: If the node is a directory, not a file
+ *@PARAM: The lookup for identifying the node
+ *@PARAM: The host of the node
+ *@PARAM: The content of the node if it is a file
+ */
+void internal_unbalanced_tree_filesystem::internal_node_data_struct::set(bool is_foreign, bool is_directory, string lookup, string host, char *file_content)
+{
+	if(!is_foreign)
+	{
+		this->is_directory = is_directory;
+		this->is_foreign = is_foreign;
+		this->file_content = file_content;
+		this->host = host;
+		this->lookup = lookup;
+	}
+}
+
+/*
  *For code compaction.
  *Change the tree's or filesystems head for current
  *operations
@@ -453,17 +485,76 @@ internal_unbalanced_tree_filesystem::internal_node_data_struct::internal_node_da
  * unknown queries belong to a foreign node. This
  * will mark the host as a broadcast address
  *
+ *@PARAM: The path to change to
  *@PARAM: If the seek should be set to the current path
  *@RETURN: The total local path completetion
  */
-string internal_unbalanced_tree_filesystem::pathChangeInline(bool keep_move)
+string internal_unbalanced_tree_filesystem::pathChangeInline(string path, bool keep_move)
 {
+	bool
+		path_heaped;
+
+	char
+		delimeter;
+
+	int
+		levels_down;
+
 	string
+		intermediate,
 		result;
+
+	istringstream
+		iterable_path;
+
+	vector<string>
+		delimeter_split_string;
+
+	internal_unbalanced_tree<internal_node_data>::internal_node_container
+		child_for_tree_update;
+
+	assert(internal_offset_armed);
 
 	result = "";
 
+	if(path != "")
+	{
+		delimeter = filesystem_reader.getDelimeter();
 
+		iterable_path.str(path);
+		copy(istream_iterator<string>(iterable_path),
+		  istream_iterator<string>(),
+		  back_inserter(delimeter_split_string));
+
+		auto get_iterator = delimeter_split_string.begin();
+		for(	path_heaped = false, levels_down = 0;
+				get_iterator != delimeter_split_string.end() && !filesystem_reader.stepForwardDirectory(*get_iterator);
+				get_iterator++, ++levels_down)
+		{
+			if(!path_heaped || !internal_filesystem_tree.moveDown(*get_iterator))
+			{
+				path_heaped = false;
+
+				child_for_tree_update.element.set(false, true, "");	
+				internal_filesystem_tree.addNode(child_for_tree_update);
+			}
+			else
+			{
+				result.append(*get_iterator);
+				if(levels_down != delimeter_split_string.size() - 2)
+					result.push_back(delimeter);
+			}
+		}
+
+		if(path != result || !keep_move)
+		{
+			while(levels_down--)
+				internal_filesystem_tree.moveUp();
+		}
+
+		if(result != "")
+			filesystem_reader.changeDirectory("");
+	}
 
 	return result;
 }
@@ -471,7 +562,8 @@ string internal_unbalanced_tree_filesystem::pathChangeInline(bool keep_move)
 /*
  *Generic initializer
  */
-internal_unbalanced_tree_filesystem::internal_unbalanced_tree_filesystem()
+internal_unbalanced_tree_filesystem::internal_unbalanced_tree_filesystem():
+	internal_offset_armed(false)
 {
 }
 
@@ -490,6 +582,9 @@ internal_unbalanced_tree_filesystem::~internal_unbalanced_tree_filesystem()
  *expected function, no handling is done. String cannot be NULL
  *therefore this being as internal as it is will have no checking
  *
+ * This TEMPORARILY is a one and done, this must be set and once
+ * set the object is locked. I intend to update this behavior
+ *
  *@PARAM: The offset to the filesystem synchronization point
  *@RETURN: If the offset was able to set or be created
  */
@@ -500,6 +595,7 @@ bool internal_unbalanced_tree_filesystem::setFilesystemOffset(string offset)
 
 	internal_filesystem_offset = offset;
 	result = filesystem_reader.setRoot(internal_filesystem_offset);
+	internal_offset_armed = result;
 
 	return result;
 }
@@ -512,7 +608,53 @@ bool internal_unbalanced_tree_filesystem::setFilesystemOffset(string offset)
  */
 bool internal_unbalanced_tree_filesystem::updateRepresentation()
 {
-	return 0;
+	bool
+		result;
+
+	int
+		last_level;
+
+	pair<int, string>
+		traversal_stack_top;
+
+	stack<pair<int, string>>
+		traversal_stack;
+
+	assert(internal_offset_armed);
+
+	result = false;
+	last_level = 0;
+
+	if(!filesystem_reader.listCurrentDirectory()->empty())
+	{
+		traversal_stack.push(pair<int, string>(last_level, ""));
+		//while(internal_filesystem_tree.moveUp()); //in the event of additional actions on move up
+		internal_filesystem_tree.internal_heap_pointer = &internal_filesystem_tree.internal_head;
+
+		while(!traversal_stack.empty())
+		{
+			traversal_stack_top = traversal_stack.top();
+			traversal_stack.pop();
+
+			while(last_level-- > traversal_stack_top.first)
+			{
+				internal_filesystem_tree.moveUp();
+				filesystem_reader.stepBackDirectory();
+			}
+
+			pathChangeInline(traversal_stack_top.second, true);
+
+			++last_level;
+			for(auto get_iterator : internal_filesystem_tree.internal_heap_pointer->children)
+				traversal_stack.push(pair<int, string>(last_level, get_iterator.element.name));
+		}
+		
+		internal_filesystem_tree.internal_heap_pointer = &internal_filesystem_tree.internal_head;
+	}
+	else
+		result = true;
+
+	return result;
 }
 
 /*
@@ -523,6 +665,8 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
  */
 string internal_unbalanced_tree_filesystem::serializeRequest(string lookup)
 {
+	assert(internal_offset_armed);
+	
 	return "";
 }
 
@@ -533,7 +677,7 @@ string internal_unbalanced_tree_filesystem::serializeRequest(string lookup)
  */
 void internal_unbalanced_tree_filesystem::deserializeResponse(string serialized_response)
 {
-
+	assert(internal_offset_armed);
 }
 
 /*
@@ -544,6 +688,8 @@ void internal_unbalanced_tree_filesystem::deserializeResponse(string serialized_
  */
 string internal_unbalanced_tree_filesystem::serializeResponse(string serialized_request)
 {
+	assert(internal_offset_armed);
+
 	return "";
 }
 
@@ -556,6 +702,8 @@ string internal_unbalanced_tree_filesystem::serializeResponse(string serialized_
  */
 string internal_unbalanced_tree_filesystem::getForeignLookup(string lookup)
 {
+	assert(internal_offset_armed);
+
 	return "";
 }
 
@@ -568,6 +716,7 @@ string internal_unbalanced_tree_filesystem::getForeignLookup(string lookup)
  */
 void internal_unbalanced_tree_filesystem::addForeignLookup(string path, string host)
 {
+	assert(internal_offset_armed);
 }
 
 /*
@@ -579,6 +728,8 @@ void internal_unbalanced_tree_filesystem::addForeignLookup(string path, string h
  */
 bool internal_unbalanced_tree_filesystem::removeForeignLookup(string lookup)
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -589,6 +740,8 @@ bool internal_unbalanced_tree_filesystem::removeForeignLookup(string lookup)
  */
 bool internal_unbalanced_tree_filesystem::killParent()
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -599,6 +752,8 @@ bool internal_unbalanced_tree_filesystem::killParent()
  */
 bool internal_unbalanced_tree_filesystem::wipeParent()
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -611,6 +766,8 @@ bool internal_unbalanced_tree_filesystem::wipeParent()
  */
 bool internal_unbalanced_tree_filesystem::killChild(string name)
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -623,6 +780,8 @@ bool internal_unbalanced_tree_filesystem::killChild(string name)
  */
 bool internal_unbalanced_tree_filesystem::pathExists(string path)
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -638,6 +797,8 @@ bool internal_unbalanced_tree_filesystem::pathExists(string path)
  */
 bool internal_unbalanced_tree_filesystem::stepBackwardsOnce()
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -654,6 +815,8 @@ bool internal_unbalanced_tree_filesystem::stepBackwardsOnce()
  */
 bool internal_unbalanced_tree_filesystem::stepForwardsOnce(string name)
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 
@@ -670,6 +833,8 @@ bool internal_unbalanced_tree_filesystem::stepForwardsOnce(string name)
  */
 bool internal_unbalanced_tree_filesystem::pathChange(string path)
 {
+	assert(internal_offset_armed);
+
 	return 0;
 }
 

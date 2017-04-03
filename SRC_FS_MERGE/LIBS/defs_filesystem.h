@@ -118,6 +118,7 @@ class filesystem_head : public debug_status
 		filesystem_head(string set_current_directory = "");
 		~filesystem_head();
 
+		char getDelimeter();
 		inline bool fileExists(string file_path);
 		inline bool directoryExists(string directory_path);
 
@@ -182,6 +183,16 @@ filesystem_head::filesystem_head(string set_current_directory):
 filesystem_head::~filesystem_head()
 {
 
+}
+
+/*
+ *Get the filesystem delimeter
+ *
+ *@RETURN: Returns the filesystem delimeter
+ */
+char filesystem_head::getDelimeter()
+{
+	return filesystem_node_delimeter;
 }
 
 /*
