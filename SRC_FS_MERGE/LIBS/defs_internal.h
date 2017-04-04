@@ -5,7 +5,14 @@
  *
  *Generic algorithms and structures reside here
  *For example tree structures
- *
+
+
+NOTE - FORGOT TO IMPLEMENT FILE UPDATES...
+NOTE - FORGOT TO IMPLEMENT FILE UPDATES...
+NOTE - FORGOT TO IMPLEMENT FILE UPDATES...
+NOTE - FORGOT TO IMPLEMENT FILE UPDATES...
+
+ 
  *Some of these structures will not submit to
  *debugging standards to lower unneeded overhead
  */
@@ -89,7 +96,7 @@ class internal_unbalanced_tree
 
 		bool addNode(struct internal_node_container_struct child);
 		bool removeNode(string name = "");
-		node_data_T getNode(string name = "");
+		shared_ptr<node_data_T> getNode(string name = "");
 		bool moveUp();
 		bool moveDown(string name);
 		void clean();
@@ -112,11 +119,9 @@ class internal_unbalanced_tree_filesystem
 		bool
 			internal_offset_armed;
 
-		int
-			internal_map_iterator;
-
 		string
-			internal_filesystem_offset;
+			internal_filesystem_offset,
+			internal_host_identifier;
 
 		struct internal_node_data_struct : internal_unbalanced_tree_node_parent
 		{
@@ -139,16 +144,16 @@ class internal_unbalanced_tree_filesystem
 		//FOR optimization later
 		//list<internal_node_data>
 		//	internal_current_path;
-
-		map<string, list<internal_node_data>>
+		//
+		map<string, string>
 			internal_foreign_nodes;
 
 		filesystem_head
-			filesystem_reader;
+			internal_filesystem_reader;
 
 		internal_unbalanced_tree<internal_node_data>
 			internal_filesystem_tree;
-
+	
 		string pathChangeInline(string path, bool keep_move);	
 
 	public:
@@ -168,7 +173,6 @@ class internal_unbalanced_tree_filesystem
 		bool removeForeignLookup(string lookup = "");
 
 		bool killParent();
-		bool wipeParent();
 		bool killChild(string name);
 
 		bool pathExists(string path);
@@ -176,9 +180,9 @@ class internal_unbalanced_tree_filesystem
 		bool stepForwardsOnce(string name);
 		bool pathChange(string path);
 
-		//ls?
+		void setHostIdentifier(string identifier);
 
-		void clean();	
+		void clean();
 };
 
 //INTERNAL UNBALANCED TREE///////////////////
@@ -204,6 +208,11 @@ internal_unbalanced_tree<node_data_T>::internal_node_container_struct::internal_
 template <typename node_data_T>
 auto internal_unbalanced_tree<node_data_T>::bfsStep()
 {
+	internal_node_container
+		*result;
+
+	result = nullptr;
+
 	//An iteration of the traversal has started
 	if(!internal_bfs_stack.empty())
 	{
@@ -213,20 +222,20 @@ auto internal_unbalanced_tree<node_data_T>::bfsStep()
 		//The current iterator contains children
 		if(!get_top->children.empty())
 		{
-			for(auto &get_iterator : get_top->children)
-				internal_bfs_stack.push(get_iterator);
+			for(auto get_iterator : get_top->children)
+				internal_bfs_stack.emplace(&get_iterator);
 		}
 
-		return get_top;
+		result = get_top;
 	}
 	else
 	{
-		for(auto &get_iterator : internal_heap_pointer->children)
-			internal_bfs_stack.push(get_iterator);
-		return internal_heap_pointer;
+		for(auto get_iterator : internal_heap_pointer->children)
+			internal_bfs_stack.emplace(&get_iterator);
+		result = internal_heap_pointer;
 	}
 
-	return nullptr;
+	return result;
 }
 
 /*
@@ -296,11 +305,11 @@ bool internal_unbalanced_tree<node_data_T>::removeNode(string name)
 	{
 		auto get_iterator = find_if(	internal_heap_pointer->children.begin(),
 												internal_heap_pointer->children.end(), 
-												[name](auto child){return (bool)!child->element.compareTo(name);});
+												[name](auto child){return child.element.name == name;});
 		result = get_iterator != internal_heap_pointer->children.end();
 
 		if(result)
-			get_iterator.children.erase(get_iterator);
+			(internal_heap_pointer->children).erase(get_iterator);
 	}
 	else
 	{
@@ -310,10 +319,15 @@ bool internal_unbalanced_tree<node_data_T>::removeNode(string name)
 		{
 			auto get_pointer = internal_heap_pointer;
 			internal_heap_pointer = internal_heap_pointer->parent;
-			internal_heap_pointer->children.erase(get_pointer); //check
+
+			auto get_iterator = find_if(	internal_heap_pointer->children.begin(),
+													internal_heap_pointer->children.end(), 
+													[get_pointer](auto child){return child.element.name == get_pointer->element.name;});
+
+			(internal_heap_pointer->children).erase(get_iterator);
 		}
-		else
-			internal_heap_pointer->element = nullptr;
+		//else
+		//setelem?
 
 		result = true;
 	}
@@ -328,23 +342,23 @@ bool internal_unbalanced_tree<node_data_T>::removeNode(string name)
  *@RETURN: The data retreived
  */
 template <typename node_data_T>
-node_data_T internal_unbalanced_tree<node_data_T>::getNode(string name)
+shared_ptr<node_data_T> internal_unbalanced_tree<node_data_T>::getNode(string name)
 {
-	node_data_T
+	shared_ptr<node_data_T>
 		result;
 	
 	result = nullptr;
 
 	if(name == "")
-		result = internal_heap_pointer->element;
+		result = make_shared<node_data_T>(internal_heap_pointer->element);
 	else
 	{
 		auto get_iterator = find_if(	internal_heap_pointer->children.begin(),
 												internal_heap_pointer->children.end(), 
-												[name](auto child){return (bool)!child.element.compareTo(name);});
+												[name](auto child){return child.element.name == name;});
 
 		if(get_iterator != internal_heap_pointer->children.end())
-			result = get_iterator;
+			result = make_shared<node_data_T>(get_iterator->element);
 	}
 
 	return result;
@@ -407,14 +421,14 @@ template <typename node_data_T>
 void internal_unbalanced_tree<node_data_T>::clean()
 {
 	auto get_current = bfsStep();
-	get_current.children.clear();
-	get_current.element = nullptr;
+	get_current->children.clear();
+	//get_current->element set clean?
 
 	while(!internal_bfs_stack.empty())
 	{
 		get_current = bfsStep();
-		get_current.children.clear();
-		get_current.element = nullptr;
+		get_current->children.clear();
+		//get_current->element set clean?
 	}
 }
 
@@ -520,7 +534,7 @@ string internal_unbalanced_tree_filesystem::pathChangeInline(string path, bool k
 
 	if(path != "")
 	{
-		delimeter = filesystem_reader.getDelimeter();
+		delimeter = internal_filesystem_reader.getDelimeter();
 
 		iterable_path.str(path);
 		copy(istream_iterator<string>(iterable_path),
@@ -529,7 +543,7 @@ string internal_unbalanced_tree_filesystem::pathChangeInline(string path, bool k
 
 		auto get_iterator = delimeter_split_string.begin();
 		for(	path_heaped = false, levels_down = 0;
-				get_iterator != delimeter_split_string.end() && !filesystem_reader.stepForwardDirectory(*get_iterator);
+				get_iterator != delimeter_split_string.end() && !internal_filesystem_reader.stepForwardDirectory(*get_iterator);
 				get_iterator++, ++levels_down)
 		{
 			if(!path_heaped || !internal_filesystem_tree.moveDown(*get_iterator))
@@ -554,7 +568,7 @@ string internal_unbalanced_tree_filesystem::pathChangeInline(string path, bool k
 		}
 
 		if(result != "")
-			filesystem_reader.changeDirectory("");
+			internal_filesystem_reader.changeDirectory("");
 	}
 
 	return result;
@@ -595,7 +609,7 @@ bool internal_unbalanced_tree_filesystem::setFilesystemOffset(string offset)
 		result;
 
 	internal_filesystem_offset = offset;
-	result = filesystem_reader.setRoot(internal_filesystem_offset);
+	result = internal_filesystem_reader.setRoot(internal_filesystem_offset);
 	internal_offset_armed = result;
 
 	return result;
@@ -637,7 +651,7 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
 	path_failure = false;
 	last_level = 0;
 
-	if(!filesystem_reader.listCurrentDirectory()->empty())
+	if(!internal_filesystem_reader.listCurrentDirectory()->empty())
 	{
 		traversal_stack.push(pair<int, string>(last_level, ""));
 		//while(internal_filesystem_tree.moveUp()); //in the event of additional actions on move up
@@ -651,7 +665,7 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
 			while(last_level-- > traversal_stack_top.first)
 			{
 				internal_filesystem_tree.moveUp();
-				filesystem_reader.stepBackDirectory();
+				internal_filesystem_reader.stepBackDirectory();
 			}
 
 			path_change_failed = traversal_stack_top.second != pathChangeInline(traversal_stack_top.second, true);
@@ -660,13 +674,13 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
 			if(!path_change_failed)
 			{
 				++last_level;
-				for(auto get_iterator : *(filesystem_reader.listCurrentDirectory()))
+				for(auto get_iterator : *(internal_filesystem_reader.listCurrentDirectory()))
 				{
 					if(get_iterator.second)
 					{
-						get_file = filesystem_reader.getFile(get_iterator.first, &file_size);
+						get_file = internal_filesystem_reader.getFile(get_iterator.first, &file_size);
 						if(get_file == nullptr)
-							filesystem_reader.createFile(get_iterator.first, get_file, true, file_size);
+							internal_filesystem_reader.createFile(get_iterator.first, get_file, true, file_size);
 						else
 							write_failed = true;
 					}
@@ -694,9 +708,14 @@ bool internal_unbalanced_tree_filesystem::updateRepresentation()
  */
 string internal_unbalanced_tree_filesystem::serializeRequest(string lookup)
 {
+	string
+		result;
+
 	assert(internal_offset_armed);
 	
-	return "";
+	result = "";
+
+	return result;
 }
 
 /*
@@ -717,9 +736,14 @@ void internal_unbalanced_tree_filesystem::deserializeResponse(string serialized_
  */
 string internal_unbalanced_tree_filesystem::serializeResponse(string serialized_request)
 {
-	assert(internal_offset_armed);
+	string
+		result;
 
-	return "";
+	assert(internal_offset_armed);
+	
+	result = "";
+
+	return result;
 }
 
 /*
@@ -731,9 +755,18 @@ string internal_unbalanced_tree_filesystem::serializeResponse(string serialized_
  */
 string internal_unbalanced_tree_filesystem::getForeignLookup(string lookup)
 {
+	string
+		result;
+
 	assert(internal_offset_armed);
 
-	return "";
+	result = "";
+
+	auto get_iterator = internal_foreign_nodes.find(lookup);
+	if(get_iterator != internal_foreign_nodes.end())
+		result = get_iterator->second;
+
+	return result;
 }
 
 /*
@@ -746,6 +779,8 @@ string internal_unbalanced_tree_filesystem::getForeignLookup(string lookup)
 void internal_unbalanced_tree_filesystem::addForeignLookup(string path, string host)
 {
 	assert(internal_offset_armed);
+
+	internal_foreign_nodes.emplace(host, path);
 }
 
 /*
@@ -757,9 +792,15 @@ void internal_unbalanced_tree_filesystem::addForeignLookup(string path, string h
  */
 bool internal_unbalanced_tree_filesystem::removeForeignLookup(string lookup)
 {
+	bool
+		result;
+
 	assert(internal_offset_armed);
 
-	return 0;
+	auto get_iterator = internal_foreign_nodes.find(lookup);
+	result = (get_iterator != internal_foreign_nodes.end());
+
+	return result;
 }
 
 /*
@@ -769,19 +810,28 @@ bool internal_unbalanced_tree_filesystem::removeForeignLookup(string lookup)
  */
 bool internal_unbalanced_tree_filesystem::killParent()
 {
+	bool
+		result;
+
+	shared_ptr<internal_node_data>
+		get_node;
+
 	assert(internal_offset_armed);
 
-	return 0;
-}
+	result = true;
 
-/*
- *Wipeout the current directory contents
- *
- *@RETURN: if the parent could be wiped
- */
-bool internal_unbalanced_tree_filesystem::wipeParent()
-{
-	assert(internal_offset_armed);
+	get_node = internal_filesystem_tree.getNode();
+	
+	if(get_node != nullptr)
+	{
+		if(get_node->is_directory)
+		{
+			result &= internal_filesystem_reader.removeDirectory();
+			result &= internal_filesystem_tree.removeNode();
+		}
+	}
+	else
+		result = false;
 
 	return 0;
 }
@@ -795,14 +845,41 @@ bool internal_unbalanced_tree_filesystem::wipeParent()
  */
 bool internal_unbalanced_tree_filesystem::killChild(string name)
 {
+	bool
+		result;
+
+	shared_ptr<internal_node_data>
+		get_node;
+
 	assert(internal_offset_armed);
+
+	result = true;
+
+	get_node = internal_filesystem_tree.getNode(name);
+	
+	if(get_node != nullptr)
+	{
+		if(get_node->is_directory)
+		{
+			if(stepForwardsOnce(name))
+				result = killParent();	
+		}
+		else
+		{
+			result &= internal_filesystem_reader.deleteFile(name);
+			result &= internal_filesystem_tree.removeNode(name);
+		}	
+	}
+	else
+		result = false;
 
 	return 0;
 }
 
 /*
  *Verify that a file or directory path exists
- *within the current tree structure
+ *within the current tree structure. If not
+ *update then return that result
  *
  *@PARAM: The path to check
  *@RETURN: If the path exists
@@ -811,7 +888,7 @@ bool internal_unbalanced_tree_filesystem::pathExists(string path)
 {
 	assert(internal_offset_armed);
 
-	return 0;
+	return pathChangeInline(path, false) != "";
 }
 
 /*
@@ -826,9 +903,17 @@ bool internal_unbalanced_tree_filesystem::pathExists(string path)
  */
 bool internal_unbalanced_tree_filesystem::stepBackwardsOnce()
 {
+	bool
+		result;
+
 	assert(internal_offset_armed);
 
-	return 0;
+	result = true;
+
+	result &= internal_filesystem_reader.stepBackDirectory();
+	result &= internal_filesystem_tree.moveUp(); 
+
+	return result;
 }
 
 /*
@@ -844,9 +929,17 @@ bool internal_unbalanced_tree_filesystem::stepBackwardsOnce()
  */
 bool internal_unbalanced_tree_filesystem::stepForwardsOnce(string name)
 {
+	bool
+		result;
+
 	assert(internal_offset_armed);
 
-	return 0;
+	result = false;
+
+	result &= internal_filesystem_reader.stepForwardDirectory(name);
+	result &= internal_filesystem_tree.moveDown(name);
+
+	return result;
 }
 
 /*
@@ -864,7 +957,35 @@ bool internal_unbalanced_tree_filesystem::pathChange(string path)
 {
 	assert(internal_offset_armed);
 
-	return 0;
+	return pathChangeInline(path, true) != "";
+}
+
+/*
+ *Set a unique host identifier
+ *This must be unique between the various
+ *running clients
+ *
+ *@PARAM: The unique host identifier string
+ */
+void internal_unbalanced_tree_filesystem::setHostIdentifier(string identifier)
+{
+	internal_host_identifier = identifier;
+}
+
+/*
+ *Clean the data structure for reuse
+ */
+void internal_unbalanced_tree_filesystem::clean()
+{
+	assert(internal_offset_armed);
+
+	internal_offset_armed = false;
+	internal_filesystem_offset = "";
+	internal_host_identifier = "";
+	internal_foreign_nodes.clear();
+
+	while(internal_filesystem_tree.moveUp());
+	internal_filesystem_tree.clean();
 }
 
 //QA/////////////////////////////////////////

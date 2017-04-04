@@ -131,7 +131,7 @@ class filesystem_head : public debug_status
 		shared_ptr<vector<pair<string, bool>>> listCurrentDirectory(string directory = "");
 
 		bool makeDirectory(string directory);
-		bool removeDirectory(string directory);
+		bool removeDirectory(string directory = "./");
 
 		bool createFile(string file_name, shared_ptr<char> content, bool is_binary_file, long int size = -1);
 		shared_ptr<char> getFile(string file_name, long int *size);
@@ -502,7 +502,7 @@ bool filesystem_head::makeDirectory(string directory)
  *@PARAM: The directory to remove if specified else default to the current
  *@RETURN: If the desired directory was removed
  */
-bool filesystem_head::removeDirectory(string directory = ".")
+bool filesystem_head::removeDirectory(string directory)
 {
 	bool
 		result;
